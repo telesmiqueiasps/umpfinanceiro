@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro - UMP Financeiro</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Google Fonts (Roboto) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom right, #fee2e2, #fecaca);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .container {
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .shadow-custom {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        .btn-gradient {
+            background: linear-gradient(to right, #ef4444, #dc2626);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(to right, #dc2626, #b91c1c);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #ef4444, #f87171);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="container max-w-md mx-auto bg-white bg-opacity-95 backdrop-blur-lg p-8 rounded-3xl shadow-custom">
+        <!-- Cabeçalho -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-gradient">
+                <i class="fas fa-exclamation-triangle mr-2"></i> Erro!
+            </h2>
+            <p class="mt-4 text-gray-700 text-lg leading-relaxed">
+                {{ mensagem }}
+            </p>
+            <hr class="w-16 mx-auto mt-6 border-t-2 border-red-500 opacity-80">
+        </div>
+
+        <!-- Botão de retorno -->
+        <div class="text-center">
+            <a href="/recuperar_senha" 
+               class="btn-gradient text-white px-6 py-3 rounded-xl font-semibold inline-flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Tentar Novamente
+            </a>
+        </div>
+    </div>
+</body>
+</html>

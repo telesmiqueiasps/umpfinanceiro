@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMP Financeiro</title>
+    <link rel="icon" href="{{ url_for('static', filename='Logos/Marca_UMP 03.png') }}" type="image/png">
+    
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-gray-50 to-blue-50 font-poppins flex flex-col overflow-hidden">
+    <!-- Barra Superior com Animação de Onda (maior) -->
+    <div class="w-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 text-white py-8 shadow-lg fixed top-0 z-10 animate-wave-bar">
+        <h1 class="text-5xl font-extrabold text-center">
+            UMP Financeiro
+        </h1>
+    </div>
+
+    <!-- Fundo com Animação de Onda -->
+    <div class="absolute inset-0 animate-wave-bar bg-gradient-to-br from-indigo-50 via-gray-50 to-blue-50 z-0"></div>
+
+    <!-- Conteúdo Centralizado -->
+    <div class="flex-1 flex items-center justify-center mt-24 relative z-10">
+        <div class="bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md border-4 border-indigo-600 animate-wave-border">
+            <!-- Título Login -->
+            <h2 class="text-2xl font-bold text-center text-gray-900 mb-6 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
+                Login
+            </h2>
+
+            <!-- Exibição de mensagens de erro -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 animate-fade-up">
+                        <ul class="list-disc pl-5">
+                            {% for category, message in messages %}
+                                <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulário -->
+            <form action="{{ url_for('login') }}" method="POST" class="space-y-6">
+                <!-- Campo Username -->
+                <div>
+                    <label for="username" class="block text-sm font-semibold text-gray-700 mb-1">Usuário</label>
+                    <input type="text" id="username" name="username" required
+                           class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
+                </div>
+
+                <!-- Campo Senha -->
+                <div>
+                    <label for="senha" class="block text-sm font-semibold text-gray-700 mb-1">Senha</label>
+                    <input type="password" id="senha" name="senha" required
+                           class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
+                </div>
+
+                <!-- Botão Entrar -->
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 rounded-lg shadow-md hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
+                    Entrar
+                </button>
+            </form>
+
+            <!-- Link para Recuperação de Senha -->
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('recuperar_senha') }}" class="text-sm text-indigo-600 hover:underline">
+                    Esqueceu sua senha?
+                </a>
+            </div>
+
+            <!-- Informações do Desenvolvedor -->
+            <div class="mt-6 text-center text-gray-500 text-sm">
+                <p>Desenvolvido por: Miquéias Teles</p>
+                <p>© 2025 - Todos os direitos reservados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estilos e Animações -->
+    <style>
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Animação de onda para a barra superior e fundo */
+        @keyframes waveBar {
+            0% {
+                background-position: 0% 50%;
+                box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            }
+            50% {
+                background-position: 100% 50%;
+                box-shadow: 0 4px 25px rgba(59, 130, 246, 0.6);
+            }
+            100% {
+                background-position: 0% 50%;
+                box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            }
+        }
+        .animate-wave-bar {
+            background: linear-gradient(90deg, #4f46e5, #3b82f6, #4f46e5);
+            background-size: 200% 200%;
+            animation: waveBar 6s ease-in-out infinite;
+        }
+
+        /* Animação de onda para a borda da caixa de login */
+        @keyframes waveBorder {
+            0% {
+                border-color: #4f46e5;
+                box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+            }
+            50% {
+                border-color: #3b82f6;
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+            }
+            100% {
+                border-color: #4f46e5;
+                box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+            }
+        }
+        .animate-wave-border {
+            animation: waveBorder 6s ease-in-out infinite;
+        }
+
+        /* Animação para mensagens de erro */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up {
+            animation: fadeUp 0.4s ease-out;
+        }
+    </style>
+</body>
+</html>

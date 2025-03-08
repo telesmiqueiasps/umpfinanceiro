@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white bg-opacity-95 backdrop-blur-lg p-10 rounded-3xl shadow-2xl mt-12 mb-12 animate-fade-in">
+    <!-- Cabeçalho -->
+    <div class="text-center mb-10">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
+            Atualizar Base
+        </h1>
+        <hr class="w-20 mx-auto mt-4 mb-0 border-t-2 border-indigo-500 opacity-80">
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="card shadow-lg p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl">
+        <h2 class="text-2xl font-semibold text-center text-red-600 mb-4">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Atenção!
+        </h2>
+        <p class="text-center text-gray-700 text-lg leading-relaxed">
+            Esta ação irá <strong class="text-red-600">excluir todos os lançamentos do ano anterior</strong> para preparar o sistema para o novo ano.
+        </p>
+        <p class="text-center text-gray-600 mt-2">
+            Não se preocupe! Os relatórios dos anos anteriores continuarão disponíveis na aba <a href="{{ url_for('consultar') }}" class="text-indigo-600 font-semibold hover:underline">Consultas</a>.
+        </p>
+
+        <!-- Formulário de confirmação -->
+        <form action="{{ url_for('excluir_todos_lancamentos') }}" method="post" class="text-center mt-6">
+            <button type="submit" class="btn bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl shadow-md hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-trash-alt mr-2"></i> Confirmar Exclusão
+            </button>
+            <a href="{{ url_for('index') }}" class="btn bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-xl shadow-md hover:from-gray-600 hover:to-gray-700 transition-all duration-300 transform hover:scale-105 ml-4">
+                <i class="fas fa-times mr-2"></i> Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Sucesso e Warning -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            {% if category in ['success', 'warning'] %}
+                <div id="flash-modal-{{ loop.index }}" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-60 backdrop-blur-sm animate-fade-in">
+                    <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-semibold {{ 'text-green-600' if category == 'success' else 'text-yellow-600' }}">
+                                <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-triangle' }} mr-2"></i>
+                                {{ 'Sucesso!' if category == 'success' else 'Aviso!' }}
+                            </h2>
+                            <button onclick="closeModal('flash-modal-{{ loop.index }}')" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">
+                                ×
+                            </button>
+                        </div>
+                        <p class="text-gray-700 text-lg">{{ message }}</p>
+                        <div class="mt-6 flex justify-end">
+                            <a href="{{ url_for('index') }}" 
+                               class="bg-gradient-to-r {{ 'from-green-500 to-green-600' if category == 'success' else 'from-yellow-500 to-yellow-600' }} text-white py-2 px-6 rounded-xl shadow-md hover:{{ 'from-green-600 hover:to-green-700' if category == 'success' else 'from-yellow-600 hover:to-yellow-700' }} transition-all duration-300 transform hover:scale-105">
+                                <i class="fas fa-arrow-right mr-2"></i> Ok
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        <script>
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+            setTimeout(function() {
+                document.querySelectorAll('[id^="flash-modal-"]').forEach(modal => {
+                    modal.style.display = 'flex';
+                });
+            }, 200);
+        </script>
+    {% endif %}
+{% endwith %}
+
+<!-- Estilos personalizados -->
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(to bottom, #f0f4f8, #e6ecef);
+        min-height: 100vh;
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .bg-clip-text {
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .shadow-2xl {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+    .rounded-3xl { border-radius: 1.5rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .btn {
+        transition: all 0.3s ease;
+    }
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    .text-red-600 { color: #dc3545; }
+    .text-gray-700 { color: #4a5568; }
+    .text-gray-600 { color: #718096; }
+</style>
+{% endblock %}
+
+{% block extra_head %}
+    <!-- Google Fonts (Roboto) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
