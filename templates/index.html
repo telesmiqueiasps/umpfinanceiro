@@ -1,159 +1,235 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-teal-50 py-8 px-4">
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
     <div class="max-w-5xl mx-auto">
-        <!-- Cabeçalho -->
-        <h1 class="text-4xl font-extrabold text-indigo-900 mb-8 text-center bg-gradient-to-r from-indigo-600 to-teal-500 text-transparent bg-clip-text animate-fade-in">
-            Informações de Identificação
-        </h1>
-
-        <!-- Seção de Identificação -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="relative bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-indigo-500">
-                <div class="absolute -top-3 left-3 bg-indigo-500 text-white p-1 rounded-full text-sm">
-                    🏢
-                </div>
-                <h3 class="text-base font-bold text-indigo-800 mt-3">UMP/Federação</h3>
-                <p class="text-gray-600 text-sm mt-1">{{ config.ump_federacao if config else 'Não definido' }}</p>
+        <!-- Cabeçalho com Ano e Ações -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Painel Financeiro</h1>
+            <div class="flex items-center space-x-4">
+                {% if current_user.id == 1 %}
+                    <a href="{{ url_for('listar_socios') }}" class="flex items-center justify-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Gestão de Sócios
+                    </a>
+                {% endif %}
             </div>
-
-            <div class="relative bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-teal-500">
-                <div class="absolute -top-3 left-3 bg-teal-500 text-white p-1 rounded-full text-sm">
-                    🏛️
-                </div>
-                <h3 class="text-base font-bold text-teal-800 mt-3">Federação/Sínodo</h3>
-                <p class="text-gray-600 text-sm mt-1">{{ config.federacao_sinodo if config else 'Não definido' }}</p>
-            </div>
-
-            <div class="relative bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-gray-500">
-                <div class="absolute -top-3 left-3 bg-gray-500 text-white p-1 rounded-full text-sm">
-                    📅
-                </div>
-                <h3 class="text-base font-bold text-gray-800 mt-3">Ano Vigente</h3>
-                <p class="text-gray-600 text-sm mt-1">{{ config.ano_vigente if config else 'Não definido' }}</p>
-            </div>
-
-            <div class="relative bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-green-500">
-                <div class="absolute -top-3 left-3 bg-green-500 text-white p-1 rounded-full text-sm">
-                    👥
-                </div>
-                <h3 class="text-base font-bold text-green-800 mt-3">Sócios Ativos</h3>
-                <p class="text-gray-600 text-sm mt-1">{{ config.socios_ativos if config else 'Não definido' }}</p>
-            </div>
-
-            <div class="relative bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-green-500">
-                <div class="absolute -top-3 left-3 bg-green-500 text-white p-1 rounded-full text-sm">
-                    🤝
-                </div>
-                <h3 class="text-base font-bold text-green-800 mt-3">Sócios Cooperadores</h3>
-                <p class="text-gray-600 text-sm mt-1">{{ config.socios_cooperadores if config else 'Não definido' }}</p>
-            </div>
-
-            <div class="relative bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-gray-600">
-                <div class="absolute -top-3 left-3 bg-gray-600 text-white p-1 rounded-full text-sm">
-                    💼
-                </div>
-                <h3 class="text-base font-bold text-gray-800 mt-3">Tesoureiro Responsável</h3>
-                <p class="text-gray-600 text-sm mt-1">{{ config.tesoureiro_responsavel if config else 'Não definido' }}</p>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">Ano: <span class="font-medium">{{ config.ano_vigente if config else 'N/A' }}</span></span>
+                {% if config and config.gestor == 'Sim' %}
+                    <a href="{{ url_for('admin_consultar') }}" class="flex items-center justify-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Painel de Gestão
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('listar_socios') }}" class="flex items-center justify-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Gestão de Sócios
+                    </a>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Seção Financeira -->
-        <h1 class="mt-12 text-4xl font-extrabold text-indigo-900 mb-6 text-center bg-gradient-to-r from-indigo-600 to-teal-500 text-transparent bg-clip-text animate-fade-in">
-            Resumo Financeiro - {{ config.ano_vigente if config else 'N/A' }}
-        </h1>
-
-        <!-- Saldo Inicial -->
-        <div class="bg-gradient-to-r from-blue-100 to-orange-400 text-white rounded-xl p-6 shadow-lg text-center transform hover:-translate-y-1 transition-transform duration-300">
-            <h2 class="text-lg font-bold text-gray-600 justify-center items-center">
-                <span class="mr-1">💰</span> Saldo Inicial do Ano
-            </h2>
-            <p class="text-2xl font-extrabold text-gray-600 mt-2">{{ saldo_formatado }}</p>
-        </div>
-
-        <!-- Receitas e Despesas -->
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-green-500">
-                <h2 class="text-lg font-bold text-green-800 flex items-center">
-                    <span class="mr-1">📈</span> Receitas do Ano
-                </h2>
-                <div class="mt-2 space-y-1">
-                    <p class="text-gray-600 text-sm"><span class="font-semibold">Outras Receitas:</span> {{ outras_receitas }}</p>
-                    <p class="text-gray-600 text-sm"><span class="font-semibold">ACI Recebida:</span> {{ aci_recebida }}</p>
-                    <p class="text-green-700 text-xl font-bold mt-2"><span class="font-semibold">Total:</span> {{ receitas }}</p>
+        <!-- Bloco de Resumo Financeiro -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Saldo Inicial</p>
+                    <p class="text-lg font-semibold text-blue-600 mt-1">{{ saldo_formatado }}</p>
                 </div>
-            </div>
-
-            <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border-t-2 border-red-500">
-                <h2 class="text-lg font-bold text-red-800 flex items-center">
-                    <span class="mr-1">📉</span> Despesas do Ano
-                </h2>
-                <div class="mt-2 space-y-1">
-                    <p class="text-gray-600 text-sm"><span class="font-semibold">Outras Despesas:</span> {{ outras_despesas }}</p>
-                    <p class="text-gray-600 text-sm"><span class="font-semibold">ACI Enviada:</span> {{ aci_enviada }}</p>
-                    <p class="text-red-700 text-xl font-bold mt-2"><span class="font-semibold">Total:</span> {{ despesas }}</p>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Receitas</p>
+                    <p class="text-lg font-semibold text-green-600 mt-1">{{ receitas }}</p>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Despesas</p>
+                    <p class="text-lg font-semibold text-red-600 mt-1">{{ despesas }}</p>
+                </div>
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Saldo Final</p>
+                    <p class="text-lg font-semibold text-blue-600 mt-1">{{ saldo_final_formatado }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Saldo Final -->
-        <div class="mt-6 bg-gradient-to-r from-blue-100 to-orange-400 text-white rounded-xl p-6 shadow-lg text-center transform hover:-translate-y-1 transition-transform duration-300">
-            <h2 class="text-lg font-bold text-gray-600 flex justify-center items-center">
-                <span class="mr-1">💰</span> Saldo Final do Ano
-            </h2>
-            <p class="text-2xl font-extrabold text-gray-600 mt-2">{{ saldo_final_formatado }}</p>
+        <!-- Bloco de Identificação -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-medium text-blue-600">Informações de Identificação</h2>
+                <a href="{{ url_for('configuracoes') }}" class="text-blue-600 text-sm font-medium hover:underline">Editar</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-600">
+                        {% if config and config.sinodal == 'Sim' %}
+                            Sinodal
+                        {% elif config and config.gestor == 'Sim' %}
+                            Federação
+                        {% else %}
+                            UMP
+                        {% endif %}
+                    </p>
+                    <p class="text-base font-medium text-blue-600 mt-1">{{ config.ump_federacao if config else 'Não definido' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">
+                        {% if config and config.sinodal == 'Sim' %}
+                            Sínodo
+                        {% elif config and config.gestor == 'Sim' %}
+                            Presbitério
+                        {% else %}
+                            Federação
+                        {% endif %}
+                    </p>
+                    <p class="text-base font-medium text-blue-600 mt-1">{{ config.federacao_sinodo if config else 'Não definido' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Tesoureiro Responsável</p>
+                    <p class="text-base font-medium text-blue-600 mt-1">{{ config.tesoureiro_responsavel if config else 'Não definido' }}</p>
+                </div>
+                <div class="flex space-x-6">
+                    <div>
+                        <p class="text-sm text-gray-600">
+                            {% if config and config.sinodal == 'Sim' %}
+                                Federações
+                            {% elif config and config.gestor == 'Sim' %}
+                                UMPs
+                            {% else %}
+                                Sócios Ativos
+                            {% endif %}
+                        </p>
+                        <p class="text-base font-medium text-red-600 mt-1">
+                            {{ config.socios_ativos if config else 'Não definido' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        {% if config and config.sinodal == 'Sim' %}
+                            <p class="text-sm text-gray-600">UMPs</p>
+                            <p class="text-base font-medium text-red-600 mt-1">
+                                {{ config.socios_cooperadores if config else 'Não definido' }}
+                            </p>
+                        {% elif config and config.gestor == 'Sim' %}
+                            <!-- Não exibe nada -->
+                        {% else %}
+                            <p class="text-sm text-gray-600">Cooperadores</p>
+                            <p class="text-base font-medium text-red-600 mt-1">
+                                {{ config.socios_cooperadores if config else 'Não definido' }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco de Detalhes Financeiros -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-medium text-blue-600">Detalhes Financeiros do Ano</h2>
+                <a href="{{ url_for('relatorio') }}" class="text-blue-600 text-sm font-medium hover:underline">Ver Completo</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-600 font-medium mb-2">Receitas</p>
+                    <div class="space-y-2">
+                        <p class="text-sm text-gray-600">Outras Receitas: <span class="text-green-600 font-medium">{{ outras_receitas }}</span></p>
+                        <p class="text-sm text-gray-600">ACI Recebida: <span class="text-green-600 font-medium">{{ aci_recebida }}</span></p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 font-medium mb-2">Despesas</p>
+                    <div class="space-y-2">
+                        <p class="text-sm text-gray-600">Outras Despesas: <span class="text-red-600 font-medium">{{ outras_despesas }}</span></p>
+                        <p class="text-sm text-gray-600">ACI Enviada: <span class="text-red-600 font-medium">{{ aci_enviada }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rodapé com Data -->
+        <div class="mt-6 text-center text-sm text-gray-600">
+            Última atualização: {{ now.strftime('%d/%m/%Y %H:%M') if now else 'Data não disponível' }}
         </div>
     </div>
 </div>
 
-<!-- Animação Simples -->
+<!-- Estilos -->
 <style>
+    /* Animação Simples */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(15px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .animate-fade-in {
         animation: fadeIn 0.6s ease-out;
     }
+
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Responsividade para dispositivos móveis */
+    @media (max-width: 640px) {
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+    }
 </style>
 
-    <!-- Modal de Sucesso e Erro -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            {% if category == 'success' or category == 'danger' %}
-                <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50">
-                    <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
-                        <div class="flex justify-between items-center mb-4">
-                            {% if category == 'success' %}
-                                <h2 class="text-xl font-semibold text-green-600">Sucesso!</h2>
-                            {% elif category == 'danger' %}
-                                <h2 class="text-xl font-semibold text-red-600">Acesso negado!</h2>
-                            {% endif %}
-                            <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500">
-                                &times;
-                            </button>
-                        </div>
-                        <p class="text-gray-700">{{ message }}</p>
-                        <div class="mt-4 flex justify-end">
-                            <a href="{{ url_for('index') }}" 
-                            class="py-2 px-4 rounded-lg transition 
-                                    {% if category == 'success' %} bg-green-600 text-white hover:bg-green-700 
-                                    {% elif category == 'danger' %} bg-red-600 text-white hover:bg-red-700 {% endif %}">
-                                Ok
-                            </a>
-                        </div>
+
+<!-- Modal de Sucesso e Erro -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        {% if category == 'success' or category == 'danger' %}
+            <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-300">
+                <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full border border-gray-200 transform transition-all duration-300 hover:scale-105 animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        {% if category == 'success' %}
+                            <h2 class="text-xl font-medium text-green-600">Sucesso!</h2>
+                        {% elif category == 'danger' %}
+                            <h2 class="text-xl font-medium text-red-600">Acesso Negado!</h2>
+                        {% endif %}
+                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400 transition-colors duration-200">
+                            ×
+                        </button>
+                    </div>
+                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a href="{{ url_for('index') }}" 
+                           class="py-2 px-4 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105
+                                  {% if category == 'success' %} bg-green-600 hover:bg-green-700 
+                                  {% elif category == 'danger' %} bg-red-600 hover:bg-red-700 {% endif %}">
+                            Ok
+                        </a>
                     </div>
                 </div>
-                <script>
-                    setTimeout(function() {
-                        document.getElementById('{{ category }}-modal').style.display = 'flex';
-                    }, 200);
-                </script>
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-    {% endwith %}
+            </div>
+            <script>
+                setTimeout(function() {
+                    document.getElementById('{{ category }}-modal').style.display = 'flex';
+                }, 200);
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endwith %}
 
 {% endblock %}

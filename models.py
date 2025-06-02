@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from datetime import date
 
 
 
@@ -9,29 +10,34 @@ class Configuracao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     admin = db.Column(db.Integer, nullable=False)
+    gestor = db.Column(db.String(100), nullable=False)
+    sinodal = db.Column(db.String(100), nullable=False)
     ump_federacao = db.Column(db.String(100), nullable=False)
     federacao_sinodo = db.Column(db.String(100), nullable=False)
     ano_vigente = db.Column(db.Integer, nullable=False)
     socios_ativos = db.Column(db.Integer, nullable=False)
     socios_cooperadores = db.Column(db.Integer, nullable=False)
     tesoureiro_responsavel = db.Column(db.String(100), nullable=False)
+    presidente_responsavel = db.Column(db.String(100), nullable=False)
     saldo_inicial = db.Column(db.Float, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
 
 
 
-class Financeiro(db.Model):
+class Financeiro(db.Model): # Criei essa tabela nem sei pq, por enquanto ainda sem utilização
     __tablename__ = 'financeiro'
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.Date)  # Verifique se o nome da coluna é 'data'
+    id_usuario = db.Column(db.Integer, nullable=False)
+    data = db.Column(db.Date)  
     tipo = db.Column(db.String(50))
     valor = db.Column(db.Float)
 
 class Lancamento(db.Model):
-    __tablename__ = 'lancamento'  # Garante que SQLAlchemy use a tabela correta
+    __tablename__ = 'lancamento'  
 
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    id_lancamento = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     data = db.Column(db.Date, nullable=False)
     tipo = db.Column(db.String(50), nullable=False)
     descricao = db.Column(db.String(120), nullable=False)
@@ -43,7 +49,7 @@ class Lancamento(db.Model):
 
 class SaldoFinal(db.Model):
     __tablename__ = 'saldo_final'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     mes = db.Column(db.Integer, nullable=False)
@@ -58,11 +64,11 @@ class SaldoFinal(db.Model):
 
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuario'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    senha = db.Column(db.String(256), nullable=False)  # Mantive o tamanho maior para evitar problemas
-    is_active = db.Column(db.Boolean, default=True)  # Para compatibilidade com Flask-Login
+    senha = db.Column(db.String(256), nullable=False)  
+    is_active = db.Column(db.Boolean, default=True)  # Aqui usei is active por causa da compatibilidade com Flask-Login
 
     def verificar_senha(self, senha):
         """Verifica a senha sem hash (comparação direta)"""
@@ -74,7 +80,57 @@ class Usuario(db.Model, UserMixin):
 
     def __init__(self, username, senha, is_active=True):
         self.username = username
-        self.senha = senha  # Agora a senha é armazenada como texto puro
+        self.senha = senha  # a senha está sem hash por enquanto
         self.is_active = is_active
 
-    
+class Socio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    nome = db.Column(db.String(100), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False)  # 'Ativo' or 'Cooperador'
+
+
+class Mensalidade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    id_socio = db.Column(db.Integer, db.ForeignKey('socio.id'), nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    ano = db.Column(db.Integer, nullable=False)
+    mes = db.Column(db.Integer, nullable=False)  # 1 to 12
+    valor_pago = db.Column(db.Float, nullable=False)
+    data_pagamento = db.Column(db.Date, nullable=False, default=date.today)
+
+    __table_args__ = (
+        db.UniqueConstraint('id_socio', 'ano', 'mes', name='unique_mensalidade_socio'),
+        db.CheckConstraint('mes BETWEEN 1 AND 12', name='check_mes'),
+    )
+
+
+class AciValorAno(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    ano = db.Column(db.Integer, nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('id_usuario', 'ano', name='unique_aci_valor_ano'),
+    )
+
+class AciPagamento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    id_socio = db.Column(db.Integer, db.ForeignKey('socio.id'), nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    ano = db.Column(db.Integer, nullable=False)
+    valor_pago = db.Column(db.Float, nullable=False)
+    data_pagamento = db.Column(db.Date, nullable=False, default=date.today) 
+
+class SuporteMensagem(db.Model):
+    __tablename__ = 'suporte_mensagem'
+    id = db.Column(db.Integer, primary_key=True)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    mensagem = db.Column(db.Text, nullable=False)
+    data_envio = db.Column(db.Date, nullable=False, default=date.today)
+    id_usuario_resposta = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    resposta = db.Column(db.Text)
+    data_resposta = db.Column(db.Date)
+    usuario = db.relationship('Usuario', foreign_keys=[id_usuario], backref='mensagens_enviadas')
+    usuario_resposta = db.relationship('Usuario', foreign_keys=[id_usuario_resposta], backref='mensagens_respondidas')

@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" style="background-color: #E6ECEF;">
+    <!-- Main Content -->
+    <div class="pt-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <!-- Hero Section -->
+            <div class="mb-8 animate-fade-in">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-4xl font-semibold text-blue-600">Painel Financeiro</h1>
+                    <a href="{{ url_for('listar_socios') }}" 
+                       class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Voltar ao início
+                    </a>
+                </div>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 flex items-center space-x-4 bg-blue-50">
+                        <svg class="w-8 h-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Sócios Ativos</p>
+                            <p class="text-2xl font-semibold text-blue-600">{{ dashboard_data.count_ativo }}</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 flex items-center space-x-4 bg-blue-50">
+                        <svg class="w-8 h-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Sócios Cooperadores</p>
+                            <p class="text-2xl font-semibold text-blue-600">{{ dashboard_data.count_cooperador }}</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 flex items-center space-x-4 bg-green-50">
+                        <svg class="w-8 h-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Mensalidades ({{ dashboard_data.selected_month_name }} {{ dashboard_data.selected_year }})</p>
+                            <p class="text-2xl font-semibold text-green-600">{{ dashboard_data.mensalidade_total }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Form -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Filtrar Mensalidades</h2>
+                <form method="POST" action="{{ url_for('dashboard') }}" class="flex flex-col sm:flex-row gap-4 items-center">
+                    <div class="w-full sm:w-1/3">
+                        <label for="mes" class="block text-sm font-medium text-gray-600 mb-1">Mês</label>
+                        <select id="mes" name="mes" class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" required>
+                            {% for numero, nome in meses %}
+                                <option value="{{ numero }}" {% if numero == dashboard_data.selected_month %}selected{% endif %}>{{ nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="w-full sm:w-1/3">
+                        <label for="ano" class="block text-sm font-medium text-gray-600 mb-1">Ano</label>
+                        <input type="number" id="ano" name="ano" value="{{ dashboard_data.selected_year }}" 
+                               class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" required>
+                    </div>
+                    <div class="w-full sm:w-auto mt-4 sm:mt-0">
+                        <button type="submit" 
+                                class="w-full sm:w-auto bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                            Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ACI Status -->
+            <div class="bg-white rounded-lg shadow-md mb-8 animate-fade-in">
+                <button class="w-full flex justify-between items-center p-6 text-2xl font-semibold text-blue-600 hover:bg-blue-50 transition-colors" onclick="toggleSection('aci-status')">
+                    <span>Status de Pagamento da ACI ({{ current_year }})</span>
+                    <svg class="w-6 h-6 transform transition-transform duration-200" id="aci-status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="aci-status" class="hidden p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="overflow-x-auto">
+                            <p class="text-sm text-gray-600 font-bold mb-2">Sócios que Pagaram</p>
+                            <table class="min-w-full bg-white text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Nome</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Tipo</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-600">
+                                    {% if socios_aci_pagos %}
+                                        {% for socio in socios_aci_pagos %}
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                                            <td class="px-4 py-2">{{ socio.nome }}</td>
+                                            <td class="px-4 py-2">{{ socio.tipo }}</td>
+                                            <td class="px-4 py-2">
+                                                <a href="{{ url_for('detalhes_socio', id_socio=socio.id) }}" 
+                                                   class="text-blue-600 hover:underline flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Detalhes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="px-4 py-2 text-center text-gray-500">Nenhum sócio pagou a ACI.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <p class="text-sm text-gray-600 font-bold mb-2">Sócios que Não Pagaram</p>
+                            <table class="min-w-full bg-white text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Nome</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Tipo</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-600">
+                                    {% if socios_aci_nao_pagos %}
+                                        {% for socio in socios_aci_nao_pagos %}
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                                            <td class="px-4 py-2">{{ socio.nome }}</td>
+                                            <td class="px-4 py-2">{{ socio.tipo }}</td>
+                                            <td class="px-4 py-2">
+                                                <a href="{{ url_for('detalhes_socio', id_socio=socio.id) }}" 
+                                                   class="text-blue-600 hover:underline flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Detalhes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="px-4 py-2 text-center text-gray-500">Todos os sócios pagaram a ACI.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensalidades Status -->
+            <div class="bg-white rounded-lg shadow-md mb-8 animate-fade-in">
+                <button class="w-full flex justify-between items-center p-6 text-2xl font-semibold text-blue-600 hover:bg-blue-50 transition-colors" onclick="toggleSection('mensalidades-status')">
+                    <span>Status de Pagamentos de Mensalidades</span>
+                    <svg class="w-6 h-6 transform transition-transform duration-200" id="mensalidades-status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="mensalidades-status" class="hidden p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="overflow-x-auto">
+                            <p class="text-sm text-gray-600 font-bold mb-2">Sócios Pendentes ({{ dashboard_data.selected_month_name }} {{ dashboard_data.selected_year }})</p>
+                            <table class="min-w-full bg-white text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Nome</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Tipo</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-600">
+                                    {% if socios_pendentes %}
+                                        {% for socio in socios_pendentes %}
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                                            <td class="px-4 py-2">{{ socio.nome }}</td>
+                                            <td class="px-4 py-2">{{ socio.tipo }}</td>
+                                            <td class="px-4 py-2">
+                                                <a href="{{ url_for('detalhes_socio', id_socio=socio.id) }}" 
+                                                   class="text-blue-600 hover:underline flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Detalhes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="px-4 py-2 text-center text-gray-500">Nenhum sócio pendente.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <p class="text-sm text-gray-600 font-bold mb-2">
+                                {% if dashboard_data.selected_month > 1 %}
+                                    Sócios Atrasados (Até {{ MES_NOMES[dashboard_data.selected_month-1] }} {{ dashboard_data.selected_year }})
+                                {% else %}
+                                    Sócios Atrasados (Nenhum mês anterior em {{ dashboard_data.selected_year }})
+                                {% endif %}
+                            </p>
+                            <table class="min-w-full bg-white text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Nome</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Tipo</th>
+                                        <th class="px-4 py-2 text-left text-blue-600 font-medium">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-600">
+                                    {% if socios_atrasados %}
+                                        {% for socio in socios_atrasados %}
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                                            <td class="px-4 py-2">{{ socio.nome }}</td>
+                                            <td class="px-4 py-2">{{ socio.tipo }}</td>
+                                            <td class="px-4 py-2">
+                                                <a href="{{ url_for('detalhes_socio', id_socio=socio.id) }}" 
+                                                   class="text-blue-600 hover:underline flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Detalhes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="px-4 py-2 text-center text-gray-500">Nenhum sócio atrasado.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metricas de ACI -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Métricas ACI</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-gray-600">ACI por Sócio ({{ current_year }})</p>
+                        <p class="text-lg font-semibold text-blue-600">{{ dashboard_data.aci_configurado_fmt }}</p>
+                    </div>
+                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                        <p class="text-sm text-gray-600">ACI Esperada ({{ current_year }})</p>
+                        <p class="text-lg font-semibold text-yellow-600">{{ dashboard_data.aci_esperado_fmt }}</p>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <p class="text-sm text-gray-600">ACI Recebida ({{ current_year }})</p>
+                        <p class="text-lg font-semibold text-green-600">{{ dashboard_data.aci_recebido_fmt }}</p>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-lg">
+                        <p class="text-sm text-gray-600">ACI Restante ({{ current_year }})</p>
+                        <p class="text-lg font-semibold text-red-600">{{ dashboard_data.aci_restante_fmt }}</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Clear Payments Button -->
+            <div class="flex justify-center mb-6 animate-fade-in">
+                <form method="POST" action="{{ url_for('limpar_todos_pagamentos') }}" class="inline">
+                    <button type="submit"
+                            onclick="return confirm('Você deseja realmente limpar TODOS OS LANÇAMENTOS registrados para sua conta? Esta ação não pode ser desfeita.');"
+                            class="flex items-center justify-center bg-red-600 text-white text-sm font-semibold py-2 px-6 rounded-lg hover:bg-red-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0016.138 21H7.862a2 2 0 00-1.995-1.858L5 7m5-4h4a2 2 0 002 2v2H8V5a2 2 0 002-2z" />
+                        </svg>
+                        Limpar Pagamentos
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 text-center text-sm text-gray-600 animate-fade-in">
+                Última atualização: {{ now.strftime('%d/%m/%Y %H:%M') }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        {% if category == 'success' or category == 'danger' %}
+            <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-300">
+                <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full border border-gray-200 transform transition-all duration-300 hover:scale-105 animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        {% if category == 'success' %}
+                            <h2 class="text-xl font-medium text-green-600">Sucesso!</h2>
+                        {% elif category == 'danger' %}
+                            <h2 class="text-xl font-medium text-red-600">Acesso Negado!</h2>
+                        {% endif %}
+                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400 transition-colors duration-200">
+                            ×
+                        </button>
+                    </div>
+                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a href="{{ url_for('dashboard') }}" 
+                           class="py-2 px-4 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105
+                                  {% if category == 'success' %} bg-green-600 hover:bg-green-700 
+                                  {% elif category == 'danger' %} bg-red-600 hover:bg-red-700 {% endif %}">
+                            Ok
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <script>
+                setTimeout(function() {
+                    document.getElementById('{{ category }}-modal').style.display = 'flex';
+                }, 200);
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- JavaScript for Accordion -->
+<script>
+    // Accordion Toggle
+    function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        const icon = document.getElementById(`${sectionId}-icon`);
+        section.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
+    }
+</script>
+
+<!-- Estilos -->
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+        table {
+            font-size: 0.875rem;
+        }
+        th, td {
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+

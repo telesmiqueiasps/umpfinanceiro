@@ -4,82 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UMP Financeiro</title>
-    <link rel="icon" href="{{ url_for('static', filename='Logos/Marca_UMP 03.png') }}" type="image/png">
-
+    <link rel="icon" href="{{ url_for('static', filename='Logos/logo_sinodal.png') }}" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-blue-50 flex h-screen overflow-hidden font-poppins">
+<body class="min-h-screen bg-gray-100 flex flex-col md:flex-row" style="font-family: 'Inter', sans-serif; background-color: #E6ECEF;">
+    <!-- Botão Hamburguer para Mobile -->
+    <button id="sidebar-toggle" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded-lg focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
 
     <!-- Barra Lateral Fixa -->
-    <aside class="w-72 bg-gradient-to-b from-blue-900 to-indigo-800 text-white p-6 flex flex-col gap-4 shadow-2xl fixed h-full transform transition-all duration-300 hover:w-76">
-        <h2 class="text-3xl font-extrabold mb-8 bg-gradient-to-r from-blue-200 to-indigo-300 text-transparent bg-clip-text animate-fade-in">
+    <aside id="sidebar" class="w-64 bg-white text-gray-700 p-6 flex flex-col gap-6 shadow-md fixed h-full transition-all duration-300 md:w-64 md:hover:w-72 border-r border-gray-200 z-40 transform -translate-x-full md:translate-x-0">
+        <!-- Logo -->
+        <div class="flex justify-center mb-4">
+            <img src="{{ url_for('static', filename='Logos/logo_sinodal.png') }}" alt="Logo UMP" class="h-16 w-auto animate-fade-in">
+        </div>
+        <!-- Título -->
+        <h2 class="text-2xl font-semibold text-blue-600 animate-fade-in text-center">
             UMP Financeiro
         </h2>
+        <!-- Mensagem de Boas-Vindas com o username -->
+        <p class="text-sm text-gray-600 mb-6 animate-fade-in text-center">
+            Bem-vindo, <span class="font-medium text-blue-600">{{ current_user.username }}</span>!
+        </p>
         
-        <nav class="flex flex-col space-y-4 flex-grow">
-            <a href="/" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/1.png') }}" alt="Ícone Início" class="mr-3 w-6 h-6">
-                Início
+        <!-- Navegação -->
+        <nav class="flex flex-col space-y-2 flex-grow overflow-y-auto">
+            <!-- Botões de Navegação -->
+             {% if current_user.id == 1 %}
+                <a href="{{ url_for('admin_panel') }}" class="flex items-center p-3 rounded-xl bg-gray-800 hover:bg-gray-700 hover:text-gray-100 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                    <img src="{{ url_for('static', filename='icones/11.png') }}" alt="Ícone Gestão" class="mr-3 w-5 h-5">
+                    <span class="text-sm font-medium text-gray-100">Banco de Dados</span>
+                </a>
+            {% endif %}
+            <a href="/" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/1.png') }}" alt="Ícone Início" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Início</span>
             </a>
-            <a href="{{ url_for('lancamentos') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/2.png') }}" alt="Ícone Lançamentos" class="mr-3 w-6 h-6">
-                Lançamentos
+            <a href="{{ url_for('lancamentos') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/2.png') }}" alt="Ícone Lançamentos" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Lançamentos</span>
             </a>
-            <a href="{{ url_for('relatorio') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/3.png') }}" alt="Ícone Relatórios" class="mr-3 w-6 h-6">
-                Relatórios
+            <a href="{{ url_for('relatorio') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/3.png') }}" alt="Ícone Relatórios" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Relatórios</span>
             </a>
-            <a href="{{ url_for('consultar') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/5.png') }}" alt="Ícone Consultas" class="mr-3 w-6 h-6">
-                Consultas
+            <a href="{{ url_for('consultar') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/5.png') }}" alt="Ícone Consultas" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Consultas</span>
             </a>
-            <a href="{{ url_for('admin_consultar') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/10.png') }}" alt="Ícone Consultas" class="mr-3 w-6 h-6">
-                Gestão
+
+            <a href="{{ url_for('configuracoes') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/6.png') }}" alt="Ícone Configurações" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Configurações</span>
             </a>
-            <a href="{{ url_for('configuracoes') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/6.png') }}" alt="Ícone Configurações" class="mr-3 w-6 h-6">
-                Configurações
+            <a href="{{ url_for('orientacoes') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/4.png') }}" alt="Ícone Orientações" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Orientações</span>
             </a>
-            <a href="{{ url_for('orientacoes') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/4.png') }}" alt="Ícone Orientações" class="mr-3 w-6 h-6">
-                Orientações
+            <a href="{{ url_for('alterar_senha') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/7.png') }}" alt="Ícone Alterar Senha" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Alterar Senha</span>
             </a>
-            <a href="{{ url_for('alterar_senha') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/7.png') }}" alt="Ícone Alterar Senha" class="mr-3 w-6 h-6">
-                Alterar Senha
+            <a href="{{ url_for('excluir_todos_lancamentos') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/8.png') }}" alt="Ícone Atualizar Base" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Atualizar Base</span>
             </a>
-            <a href="{{ url_for('excluir_todos_lancamentos') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/8.png') }}" alt="Ícone Atualizar Base" class="mr-3 w-6 h-6">
-                Atualizar Base
+            <a href="{{ url_for('suporte') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/10.png') }}" alt="Ícone Atualizar Base" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Dúvidas e Suporte</span>
             </a>
-            <a href="{{ url_for('logout') }}" class="flex items-center p-3 rounded-xl bg-opacity-0 hover:bg-blue-800 hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
-                <img src="{{ url_for('static', filename='icones/9.png') }}" alt="Ícone Sair" class="mr-3 w-6 h-6">
-                Sair
+            <a href="{{ url_for('logout') }}" class="flex items-center p-3 rounded-xl bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-all duration-200 transform hover:scale-105 hover:shadow-sm">
+                <img src="{{ url_for('static', filename='icones/9.png') }}" alt="Ícone Sair" class="mr-3 w-5 h-5">
+                <span class="text-sm font-medium">Sair</span>
             </a>
         </nav>
 
         <!-- Informações do Desenvolvedor -->
-        <div class="mt-auto text-sm text-gray-200 border-t border-blue-700 pt-4 animate-fade-in-delay">
-            <p class="text-xs">Desenvolvido por:</p>
-            <p class="font-semibold text-sm">Miquéias Teles</p>
-            <p class="text-xs mt-1">© 2025 - Todos os direitos reservados</p>
+        <div class="mt-auto text-xs text-gray-500 border-t border-gray-200 pt-4 animate-fade-in-delay">
+            <p class="font-medium">Desenvolvido por:</p>
+            <p class="font-medium text-gray-600">Miquéias Teles</p>
+            <p class="mt-1 font-normal">© 2025</p>
         </div>
     </aside>
 
+    <!-- Overlay para Mobile -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-50 z-30 hidden md:hidden"></div>
+
     <!-- Conteúdo Principal -->
-    <div class="flex-1 ml-72 flex flex-col h-screen overflow-y-auto p-8 bg-white bg-opacity-80 backdrop-blur-md">
+    <div class="flex-1 md:ml-64 flex flex-col min-h-screen overflow-y-auto p-6 bg-gray-100 transition-all duration-300" style="background-color: #E6ECEF;">
         {% block content %}{% endblock %}
     </div>
 
     <!-- Estilos e Animações -->
     <style>
-        /* Fonte Personalizada */
-        .font-poppins {
-            font-family: 'Poppins', sans-serif;
-        }
-
         /* Fade In */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -93,9 +114,36 @@
         }
 
         /* Ajuste hover da sidebar */
-        .hover\:w-76:hover {
-            width: 19rem; /* Aproximadamente 304px, um pouco maior que w-72 */
+        .md\:hover\:w-72:hover {
+            width: 18rem; /* Aproximadamente 288px */
+        }
+
+        /* Efeito de hover nos botões */
+        .hover\:shadow-sm {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Sidebar aberta em mobile */
+        .sidebar-open {
+            transform: translateX(0);
         }
     </style>
+
+    <!-- Script para toggle da sidebar em mobile -->
+    <script>
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('hidden');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.add('hidden');
+        });
+    </script>
 </body>
 </html>

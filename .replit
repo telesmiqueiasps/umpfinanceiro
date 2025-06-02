@@ -1,0 +1,17 @@
+modules = ["web", "python-3.12"]
+run = "python app.py"
+
+[nix]
+channel = "stable-24_05"
+packages = ["poppler_utils"]
+
+[deployment]
+run = ["sh", "-c", "python app.py"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080

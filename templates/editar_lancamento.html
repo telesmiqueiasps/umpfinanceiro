@@ -1,82 +1,134 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-    <div class="max-w-5xl mx-auto mt-12 bg-white p-8 rounded-xl shadow-xl border-t-4 border-green-600">
-        
-        <h1 class="text-3xl font-bold text-center text-gray-900 mb-8">
-            Editar Lançamento
-        </h1>
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
+        <!-- Cabeçalho -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Editar Lançamento</h1>
+            <a href="/mes/{{ mes }}/{{ ano }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar
+            </a>
+        </div>
 
-        <form method="POST" class="space-y-6">
-            <!-- Data -->
-            <div>
-                <label for="data" class="block text-lg font-semibold text-gray-700">Data:</label>
-                <input type="date" name="data" value="{{ lancamento.data }}" class="w-full lg:w-[600px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" required>
-            </div>
+        <!-- Formulário em Bloco -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <form method="POST" class="space-y-6">
+                <!-- Data -->
+                <div>
+                    <label for="data" class="block text-sm text-gray-600 font-medium">Data</label>
+                    <input type="date" name="data" value="{{ lancamento.data }}" class="input-field" required>
+                </div>
 
-            <!-- Tipo -->
-            <div>
-                <label for="tipo" class="block text-lg font-semibold text-gray-700">Tipo:</label>
-                <select name="tipo" class="w-full lg:w-[600px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" required>
-                    <option value="Outras Receitas" {% if lancamento.tipo == 'Outras Receitas' %}selected{% endif %}>Outras Receitas</option>
-                    <option value="Outras Despesas" {% if lancamento.tipo == 'Outras Despesas' %}selected{% endif %}>Outras Despesas</option>
-                    <option value="ACI Recebida" {% if lancamento.tipo == 'ACI Recebida' %}selected{% endif %}>ACI Recebida</option>
-                    <option value="ACI Enviada" {% if lancamento.tipo == 'ACI Enviada' %}selected{% endif %}>ACI Enviada</option>
-                </select>
-            </div>
+                <!-- Tipo -->
+                <div>
+                    <label for="tipo" class="block text-sm text-gray-600 font-medium">Tipo</label>
+                    <select name="tipo" class="input-field" required>
+                        <option value="Outras Receitas" {% if lancamento.tipo == 'Outras Receitas' %}selected{% endif %}>Outras Receitas</option>
+                        <option value="Outras Despesas" {% if lancamento.tipo == 'Outras Despesas' %}selected{% endif %}>Outras Despesas</option>
+                        <option value="ACI Recebida" {% if lancamento.tipo == 'ACI Recebida' %}selected{% endif %}>ACI Recebida</option>
+                        <option value="ACI Enviada" {% if lancamento.tipo == 'ACI Enviada' %}selected{% endif %}>ACI Enviada</option>
+                    </select>
+                </div>
 
-            <!-- Descrição -->
-            <div>
-                <label for="descricao" class="block text-lg font-semibold text-gray-700">Descrição:</label>
-                <input type="text" name="descricao" value="{{ lancamento.descricao }}" class="w-full lg:w-[600px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" required>
-            </div>
+                <!-- Descrição -->
+                <div>
+                    <label for="descricao" class="block text-sm text-gray-600 font-medium">Descrição</label>
+                    <input type="text" name="descricao" value="{{ lancamento.descricao }}" class="input-field" required>
+                </div>
 
-            <!-- Valor -->
-            <div>
-                <label for="valor" class="block text-lg font-semibold text-gray-700">Valor:</label>
-                <input type="number" step="0.01" name="valor" value="{{ lancamento.valor }}" class="w-full lg:w-[600px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" required>
-            </div>
+                <!-- Valor -->
+                <div>
+                    <label for="valor" class="block text-sm text-gray-600 font-medium">Valor</label>
+                    <input type="number" step="0.01" name="valor" value="{{ lancamento.valor }}" class="input-field" required>
+                </div>
 
-            <!-- Botões -->
-            <div class="flex gap-4">
-                <button type="submit" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold shadow-md hover:bg-green-700 transition-all">
-                    Salvar Alterações
-                </button>
-                <a href="/mes/{{ mes }}/{{ ano }}" class="w-full text-center bg-gray-500 text-white p-3 rounded-lg font-semibold shadow-md hover:bg-gray-600 transition-all">
-                    <span class="block text-center">Cancelar</span>
-                </a>
-            </div>
-        </form>
+                <!-- Botões -->
+                <div class="flex gap-4">
+                    <button type="submit" class="w-full py-3 px-4 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 transition-all duration-200">
+                        Salvar Alterações
+                    </button>
+                    <a href="/mes/{{ mes }}/{{ ano }}" 
+                       class="w-full text-center py-3 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 
-    <!-- Modal de Sucesso -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                {% if category == 'success' %}
-                    <div id="success-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50">
-                        <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-semibold text-green-600">Sucesso!</h2>
-                                <button onclick="document.getElementById('success-modal').style.display='none'" class="text-gray-500">
-                                    &times;
-                                </button>
-                            </div>
-                            <p class="text-gray-700">{{ message }}</p>
-                            <div class="mt-4 flex justify-end">
-                                <a href="/mes/{{ mes }}/{{ ano }}" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
-                                    Ok
-                                </a>
-                            </div>
-                        </div>
+<!-- Estilos -->
+<style>
+    /* Campo de Entrada */
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 6px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Animação Simples */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+<!-- Modal de Sucesso -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        {% if category == 'success' %}
+            <div id="success-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-300">
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full border border-gray-200 transform transition-all duration-300 hover:scale-105 animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-medium text-green-600">Sucesso!</h2>
+                        <button onclick="document.getElementById('success-modal').style.display='none'" 
+                                class="text-gray-500 hover:text-gray-400 transition-colors duration-200">
+                            ×
+                        </button>
                     </div>
-                    <script>
-                        setTimeout(function() {
-                            document.getElementById('success-modal').style.display = 'flex';
-                        }, 200);
-                    </script>
-                {% endif %}
-            {% endfor %}
+                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a href="/mes/{{ mes }}/{{ ano }}" 
+                           class="py-2 px-4 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-all duration-200 transform hover:scale-105">
+                            Ok
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <script>
+                setTimeout(function() {
+                    document.getElementById('success-modal').style.display = 'flex';
+                }, 200);
+            </script>
         {% endif %}
-    {% endwith %}
+    {% endfor %}
+{% endif %}
+{% endwith %}
+
 {% endblock %}

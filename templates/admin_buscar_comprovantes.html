@@ -1,151 +1,123 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <!-- Cabeçalho -->
-    <div class="text-center mb-8">
-        <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
-            Consultar Comprovantes (Admin)
-        </h1>
-        <p class="mt-2 text-md text-gray-500 leading-relaxed max-w-md mx-auto">
-            Busque comprovantes financeiros de UMPs/Federações por ano.
-        </p>
-        <div class="w-10 h-1 mx-auto mt-4 bg-gray-400 rounded-full"></div>
-    </div>
-
-    <!-- Card com formulário -->
-    <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-        <form method="POST" class="flex flex-col space-y-6">
-            <!-- Seleção de UMP/Federação -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    UMP/Federação
-                </label>
-                <select name="usuario_id" required 
-                    class="w-full p-3 border border-gray-300 rounded-lg text-gray-900 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 transition-all duration-200">
-                    <option value="">-- Escolha uma UMP ou Federação --</option>
-                    {% for usuario in usuarios_autorizados %}
-                        <option value="{{ usuario['id_usuario'] }}" {% if usuario['id_usuario'] == usuario_selecionado %}selected{% endif %}>
-                            {{ usuario['ump_federacao'] }}
-                        </option>
-                    {% endfor %}
-                </select>
+<div class="min-h-screen bg-gray-100" style="background-color: #E6ECEF;">
+    <div class="pt-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="mb-6 animateFadeIn">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-semibold text-blue-600">Consultar Comprovantes (Admin)</h1>
+                    <a href="{{ url_for('admin_consultar') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Voltar
+                    </a>
+                </div>
+                <p class="mt-2 text-sm text-gray-600">Busque comprovantes financeiros de UMPs/Federações por ano.</p>
             </div>
 
-            <!-- Seleção de Ano -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Ano
-                </label>
-                <select name="ano" required 
-                        class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 transition-all duration-200">
-                    <option value="">-- Escolha um ano --</option>
-                    {% for ano in anos %}
-                        <option value="{{ ano }}" {% if ano == ano_atual %}selected{% endif %}>{{ ano }}</option>
-                    {% endfor %}
-                </select>
+            <!-- Form Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 animateFadeIn">
+                <form method="POST" class="space-y-6">
+                    <!-- Seleção de UMP/Federação -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">UMP/Federação</label>
+                        <select name="usuario_id" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 text-sm transition-all duration-200">
+                            <option value="">-- Escolha uma UMP ou Federação --</option>
+                            {% for usuario in usuarios_autorizados %}
+                                <option value="{{ usuario['id_usuario'] }}" {% if usuario['id_usuario'] == usuario_selecionado %}selected{% endif %}>
+                                    {{ usuario['ump_federacao'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Seleção de Ano -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">Ano</label>
+                        <select name="ano" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 text-sm transition-all duration-200">
+                            <option value="">-- Escolha um ano --</option>
+                            {% for ano in anos %}
+                                <option value="{{ ano }}" {% if ano == ano_atual %}selected{% endif %}>{{ ano }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Botão de Busca -->
+                    <button type="submit" class="w-full flex items-center justify-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Buscar Comprovantes
+                    </button>
+                </form>
+
+                <!-- Iframe do Comprovante -->
+                {% if relatorio_encontrado %}
+                    <div class="mt-6 rounded-lg shadow-md border border-gray-200 overflow-hidden" style="height: 800px;">
+                        <iframe src="{{ url_for('admin_visualizar_comprovantes', filename=relatorio_encontrado) }}" class="w-full h-full border-none"></iframe>
+                    </div>
+                {% endif %}
             </div>
 
-            <!-- Botão de Busca -->
-            <button type="submit" 
-                    class="w-full max-w-xs mx-auto bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-900 transition-all duration-300 text-base font-medium border border-gray-700">
-                Buscar Comprovantes
-            </button>
-        </form>
-
-        <!-- Iframe do Relatório -->
-        {% if relatorio_encontrado %}
-            <div class="mt-6 rounded-lg overflow-hidden shadow-md border border-gray-200" style="height: 600px;">
-                <iframe src="{{ url_for('admin_visualizar_comprovantes', filename=relatorio_encontrado) }}" 
-                        class="w-full h-full border-none"></iframe>
-            </div>
-        {% endif %}
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category in ['success', 'danger', 'warning'] %}
+                    <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-200">
+                        <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full animateFadeIn">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2 {% if category == 'success' %}text-green-600{% elif category == 'danger' %}text-red-600{% else %}text-yellow-600{% endif %}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        {% if category == 'success' %}
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4 4-4" />
+                                        {% elif category == 'danger' %}
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        {% else %}
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        {% endif %}
+                                    </svg>
+                                    <h2 class="text-xl font-semibold {% if category == 'success' %}text-green-600{% elif category == 'danger' %}text-red-600{% else %}text-yellow-600{% endif %}">
+                                        {{ 'Sucesso!' if category == 'success' else 'Acesso Negado!' if category == 'danger' else 'Aviso!' }}
+                                    </h2>
+                                </div>
+                                <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400 text-xl">×</button>
+                            </div>
+                            <p class="text-gray-600 text-sm">{{ message }}</p>
+                            <div class="mt-4 flex justify-end">
+                                <a href="{{ url_for('admin_buscar_comprovantes') }}" class="px-4 py-2 rounded-lg text-white text-sm font-medium {% if category == 'success' %}bg-green-600 hover:bg-green-700{% elif category == 'danger' %}bg-red-600 hover:bg-red-700{% else %}bg-yellow-600 hover:bg-yellow-700{% endif %} transition-all duration-200 shadow-md">
+                                    Ok
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        setTimeout(() => { document.getElementById('{{ category }}-modal').style.display = 'flex'; }, 200);
+                    </script>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
     </div>
 </div>
 
-
-<!-- Modal de Sucesso, Erro e Aviso -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            {% if category in ['success', 'danger', 'warning'] %}
-                <div id="{{ category }}-modal" 
-                     class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-60 animate-fade-in">
-                    <div class="bg-white p-6 rounded-xl shadow-md max-w-sm w-full border border-gray-200">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-semibold 
-                                       {{ 'text-green-600' if category == 'success' else 'text-red-600' if category == 'danger' else 'text-yellow-600' }}">
-                                <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-circle' if category == 'danger' else 'fa-exclamation-triangle' }} mr-2"></i>
-                                {{ 'Sucesso!' if category == 'success' else 'Acesso Negado!' if category == 'danger' else 'Aviso!' }}
-                            </h2>
-                            <button onclick="closeModal('{{ category }}-modal')" 
-                                    class="text-gray-500 hover:text-gray-700 text-2xl font-bold">
-                                ×
-                            </button>
-                        </div>
-                        <p class="text-gray-700">{{ message }}</p>
-                        <div class="mt-4 flex justify-end">
-                            <a href="{{ url_for('admin_buscar_comprovantes') }}" 
-                               class="px-4 py-2 rounded-lg transition-all duration-300 text-white font-medium
-                                      {{ 'bg-green-600 hover:bg-green-700' if category == 'success' else 'bg-red-600 hover:bg-red-700' if category == 'danger' else 'bg-yellow-600 hover:bg-yellow-700' }}">
-                                Ok
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
-        <script>
-            function closeModal(modalId) {
-                document.getElementById(modalId).style.display = 'none';
-            }
-            setTimeout(function() {
-                document.querySelectorAll('[id$="-modal"]').forEach(modal => {
-                    modal.style.display = 'flex';
-                });
-            }, 200);
-        </script>
-    {% endif %}
-{% endwith %}
-
-<!-- Estyling personalizados -->
 <style>
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    .animate-slide-up {
-        animation: slideUp 0.5s ease-out forwards;
-    }
-    .animate-fade-in {
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-    .shadow-md {
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    }
-    .shadow-xl {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    }
-    .rounded-xl {
-        border-radius: 0.75rem;
-    }
-    .rounded-lg {
-        border-radius: 0.5rem;
-    }
-    button, a {
-        transition: all 0.3s ease;
-    }
-    button:hover, a:hover {
-        transform: translateY(-1px);
-    }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animateFadeIn {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+.shadow-md {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 </style>
-{% endblock %}
-
-{% block extra_head %}
-    <!-- Font Awesome para ícones -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 {% endblock %}

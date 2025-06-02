@@ -4,135 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UMP Financeiro</title>
-    <link rel="icon" href="{{ url_for('static', filename='Logos/Marca_UMP 03.png') }}" type="image/png">
-    
+    <link rel="icon" href="{{ url_for('static', filename='Logos/logo_sinodal.png') }}" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-gray-50 to-blue-50 font-poppins flex flex-col overflow-hidden">
-    <!-- Barra Superior com Animação de Onda (maior) -->
-    <div class="w-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 text-white py-8 shadow-lg fixed top-0 z-10 animate-wave-bar">
-        <h1 class="text-5xl font-extrabold text-center">
+<body class="min-h-screen bg-gray-100 flex flex-col overflow-hidden relative" style="font-family: 'Inter', sans-serif; background-color: #E6ECEF;">
+    <!-- Ondas Gradientes no Fundo -->
+    <div class="absolute inset-0 z-0">
+        <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="wave-1" d="M0 400C240 300 480 500 720 400C960 300 1200 500 1440 400V800H0V400Z" fill="url(#waveGradient)" fill-opacity="0.2"/>
+            <path class="wave-2" d="M0 500C240 450 480 550 720 500C960 450 1200 550 1440 500V800H0V500Z" fill="url(#waveGradient)" fill-opacity="0.1"/>
+            <defs>
+                <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#E6ECEF;stop-opacity:0" />
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- Barra Superior -->
+    <div class="w-full bg-white py-6 shadow-md fixed top-0 z-20 border-b border-gray-200">
+        <h1 class="text-3xl font-semibold text-blue-600 text-center tracking-tight">
             UMP Financeiro
         </h1>
     </div>
 
-    <!-- Fundo com Animação de Onda -->
-    <div class="absolute inset-0 animate-wave-bar bg-gradient-to-br from-indigo-50 via-gray-50 to-blue-50 z-0"></div>
-
     <!-- Conteúdo Centralizado -->
-    <div class="flex-1 flex items-center justify-center mt-24 relative z-10">
-        <div class="bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md border-4 border-indigo-600 animate-wave-border">
-            <!-- Título Login -->
-            <h2 class="text-2xl font-bold text-center text-gray-900 mb-6 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
-                Login
-            </h2>
+    <div class="flex-1 flex items-center justify-center mt-24 px-4 z-10">
+        <!-- Caixa de Login -->
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-6 border border-gray-200">
+            <!-- Seção da Logo -->
+            <div class="flex-shrink-0">
+                <img src="{{ url_for('static', filename='Logos/logo_sinodal 01.png') }}" alt="Logo UMP" class="h-24 w-auto animate-pulse-slow">
+            </div>
 
-            <!-- Exibição de mensagens de erro -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 animate-fade-up">
-                        <ul class="list-disc pl-5">
-                            {% for category, message in messages %}
-                                <li>{{ message }}</li>
-                            {% endfor %}
-                        </ul>
+            <!-- Seção do Formulário -->
+            <div class="flex-1">
+                <!-- Título Login -->
+                <h2 class="text-xl font-medium text-blue-600 mb-4 text-center md:text-left">
+                    Login
+                </h2>
+
+                <!-- Exibição de mensagens de erro -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-lg text-red-600 animate-fade-in text-sm">
+                            <ul class="list-disc pl-4">
+                                {% for category, message in messages %}
+                                    <li>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Formulário -->
+                <form action="{{ url_for('login') }}" method="POST" class="space-y-4">
+                    <!-- Campo Username -->
+                    <div class="relative">
+                        <label for="username" class="block text-sm font-medium text-gray-600 mb-1">Usuário</label>
+                        <input type="text" id="username" name="username" required
+                               class="w-full p-3 border border-gray-200 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-600 focus:outline-none transition-all duration-200 pl-10">
+                        <span class="absolute left-3 top-10 text-gray-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>
                     </div>
-                {% endif %}
-            {% endwith %}
 
-            <!-- Formulário -->
-            <form action="{{ url_for('login') }}" method="POST" class="space-y-6">
-                <!-- Campo Username -->
-                <div>
-                    <label for="username" class="block text-sm font-semibold text-gray-700 mb-1">Usuário</label>
-                    <input type="text" id="username" name="username" required
-                           class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
+                    <!-- Campo Senha -->
+                    <div class="relative">
+                        <label for="senha" class="block text-sm font-medium text-gray-600 mb-1">Senha</label>
+                        <input type="password" id="senha" name="senha" required
+                               class="w-full p-3 border border-gray-200 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-600 focus:outline-none transition-all duration-200 pl-10">
+                        <span class="absolute left-3 top-10 text-gray-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.761 0-5 2.239-5 5h10c0-2.761-2.239-5-5-5zm9-6v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2l2-3h6l2 3h2a2 2 0 012 2z"></path></svg></span>
+                    </div>
+
+                    <!-- Botão Entrar -->
+                    <button type="submit"
+                            class="w-full bg-blue-600 text-white py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 flex items-center justify-center">
+                        Entrar
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </form>
+
+                <!-- Link para Recuperação de Senha -->
+                <div class="mt-4 text-center md:text-left">
+                    <a href="{{ url_for('recuperar_senha') }}" class="text-sm text-blue-600 hover:underline transition-colors duration-200">
+                        Esqueceu sua senha?
+                    </a>
                 </div>
-
-                <!-- Campo Senha -->
-                <div>
-                    <label for="senha" class="block text-sm font-semibold text-gray-700 mb-1">Senha</label>
-                    <input type="password" id="senha" name="senha" required
-                           class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
-                </div>
-
-                <!-- Botão Entrar -->
-                <button type="submit"
-                        class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 rounded-lg shadow-md hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
-                    Entrar
-                </button>
-            </form>
-
-            <!-- Link para Recuperação de Senha -->
-            <div class="mt-4 text-center">
-                <a href="{{ url_for('recuperar_senha') }}" class="text-sm text-indigo-600 hover:underline">
-                    Esqueceu sua senha?
-                </a>
             </div>
+        </div>
 
-            <!-- Informações do Desenvolvedor -->
-            <div class="mt-6 text-center text-gray-500 text-sm">
-                <p>Desenvolvido por: Miquéias Teles</p>
-                <p>© 2025 - Todos os direitos reservados</p>
-            </div>
+        <!-- Informações do Desenvolvedor -->
+        <div class="absolute bottom-4 text-center text-gray-500 text-xs">
+            <p>Desenvolvido por: Miquéias Teles</p>
+            <p>© 2025</p>
         </div>
     </div>
 
-    <!-- Estilos e Animações -->
+    <!-- Estilos -->
     <style>
-        .font-poppins {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* Animação de onda para a barra superior e fundo */
-        @keyframes waveBar {
-            0% {
-                background-position: 0% 50%;
-                box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
-            }
-            50% {
-                background-position: 100% 50%;
-                box-shadow: 0 4px 25px rgba(59, 130, 246, 0.6);
-            }
-            100% {
-                background-position: 0% 50%;
-                box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
-            }
-        }
-        .animate-wave-bar {
-            background: linear-gradient(90deg, #4f46e5, #3b82f6, #4f46e5);
-            background-size: 200% 200%;
-            animation: waveBar 6s ease-in-out infinite;
-        }
-
-        /* Animação de onda para a borda da caixa de login */
-        @keyframes waveBorder {
-            0% {
-                border-color: #4f46e5;
-                box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
-            }
-            50% {
-                border-color: #3b82f6;
-                box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
-            }
-            100% {
-                border-color: #4f46e5;
-                box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
-            }
-        }
-        .animate-wave-border {
-            animation: waveBorder 6s ease-in-out infinite;
-        }
-
-        /* Animação para mensagens de erro */
-        @keyframes fadeUp {
+        /* Animação de entrada */
+        @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-up {
-            animation: fadeUp 0.4s ease-out;
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+
+
+        /* Animação das ondas */
+        @keyframes wave1 {
+            0% { d: path("M0 400C240 300 480 500 720 400C960 300 1200 500 1440 400V800H0V400Z"); }
+            50% { d: path("M0 450C240 350 480 550 720 450C960 350 1200 550 1440 450V800H0V450Z"); }
+            100% { d: path("M0 400C240 300 480 500 720 400C960 300 1200 500 1440 400V800H0V400Z"); }
+        }
+        @keyframes wave2 {
+            0% { d: path("M0 500C240 450 480 550 720 500C960 450 1200 550 1440 500V800H0V500Z"); }
+            50% { d: path("M0 550C240 500 480 600 720 550C960 500 1200 600 1440 550V800H0V550Z"); }
+            100% { d: path("M0 500C240 450 480 550 720 500C960 450 1200 550 1440 500V800H0V500Z"); }
+        }
+        .wave-1 {
+            animation: wave1 6s ease-in-out infinite;
+        }
+        .wave-2 {
+            animation: wave2 8s ease-in-out infinite;
+        }
+
+        /* Ajustes de Layout */
+        .shadow-md {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
     </style>
 </body>

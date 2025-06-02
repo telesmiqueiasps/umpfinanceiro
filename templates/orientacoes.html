@@ -1,201 +1,64 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="max-w-4xl mx-auto bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-2xl shadow-2xl mt-8 animate-fade-in">
-    <h1 class="text-4xl font-extrabold text-center text-gray-900 mb-10 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
-        Como Utilizar o UMP Financeiro
-    </h1>
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
 
-    <div class="space-y-10">
-        <!-- Seção 1: Visão Geral -->
-        <section class="animate-fade-up">
-            <h2 class="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-                <span class="mr-2">🌟</span> 1. Visão Geral
-            </h2>
-            <p class="text-gray-700 leading-relaxed">
-                O UMP Financeiro é um sistema desenvolvido para facilitar o gerenciamento financeiro da nossa UMP, proporcionando uma maneira eficiente de registrar, acompanhar e analisar movimentações financeiras mensais e anuais. Ele garante transparência e organização, permitindo um controle detalhado sobre entradas e saídas de recursos.
+{% block content %}
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
+        <!-- Cabeçalho -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Como Utilizar o UMP Financeiro</h1>
+            <a href="{{ url_for('index') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar ao início
+            </a>
+        </div>
+
+        <!-- Bloco Principal -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <p class="text-sm text-gray-600 text-center mb-6">
+                Assista ao vídeo abaixo para aprender como utilizar o UMP Financeiro.
             </p>
-            
-            <h3 class="text-xl font-semibold text-gray-800 mt-6 flex items-center">
-                <span class="mr-2">📌</span> Principais Funcionalidades
-            </h3>
-            <div class="mt-4 space-y-3">
-                <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="mr-2">1️⃣</span> Lançamento de Movimentações Financeiras
-                </h4>
-                <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="mr-2">2️⃣</span> Controle e Consulta de Lançamentos
-                </h4>
-                <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="mr-2">3️⃣</span> Upload e Gerenciamento de Comprovantes
-                </h4>
-                <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="mr-2">4️⃣</span> Relatórios Financeiros Detalhados
-                </h4>
-                <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                    <span class="mr-2">5️⃣</span> Segurança e Controle de Acesso
-                </h4>
+
+            <!-- Vídeo Tutorial -->
+            <div class="max-w-4xl mx-auto">
+                <div class="relative" style="padding-bottom: 56.25%;"> <!-- Proporção 16:9 -->
+                    <video controls class="absolute top-0 left-0 w-full h-full rounded-lg shadow-md border border-gray-200">
+                        <source src="{{ url_for('static', filename='Hino Mocidade.mp4') }}" type="video/mp4">
+                        Seu navegador não suporta a reprodução de vídeos. Por favor, atualize seu navegador ou use um diferente.
+                    </video>
+                </div>
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-800 mt-6 flex items-center">
-                <span class="mr-2">✅</span> Benefícios do UMP Financeiro
-            </h3>
-            <ul class="list-none pl-5 text-gray-700 leading-relaxed mt-2">
-                <li class="flex items-center"><span class="mr-2">✔️</span> Organização eficiente das finanças da UMP</li>
-                <li class="flex items-center"><span class="mr-2">✔️</span> Transparência na gestão dos recursos</li>
-                <li class="flex items-center"><span class="mr-2">✔️</span> Facilidade na prestação de contas</li>
-                <li class="flex items-center"><span class="mr-2">✔️</span> Controle total sobre os lançamentos e comprovantes</li>
-            </ul>
-            
-            <p class="text-gray-700 mt-4 italic">
-                O <strong>UMP Financeiro</strong> foi desenvolvido para tornar a gestão financeira mais simples, acessível e confiável! 🚀
-            </p>
-        </section>
-
-        <!-- Seção 2: Configurar Informações -->
-        <section class="animate-fade-up delay-100">
-            <h2 class="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-                <span class="mr-2">⚙️</span> 2. Configurar Informações de Identificação
-            </h2>
-            <p class="text-gray-700 leading-relaxed">
-                Antes de começar a registrar movimentações, é essencial preencher corretamente as informações de identificação da UMP. Essas informações garantem que os relatórios e registros financeiros estejam completos e organizados.
-            </p>
-            
-            <h3 class="text-lg font-semibold text-gray-800 mt-4 flex items-center">
-                <span class="mr-2">📌</span> Como preencher as informações:
-            </h3>
-            <ol class="list-decimal pl-6 text-gray-700 leading-relaxed mt-2">
-                <li>Clique no botão <strong class="text-blue-600">"Configurações"</strong> no canto superior direito.</li>
-                <li>Preencha todos os campos obrigatórios com os dados da UMP.</li>
-                <li>Após inserir as informações, clique em <strong class="text-blue-600">"Salvar Configurações"</strong>.</li>
-            </ol>
-            
-            <p class="text-gray-700 mt-4 bg-blue-50 p-3 rounded-lg">
-                🎯 <strong>Importante:</strong> Essas informações serão utilizadas nos relatórios e na identificação da UMP dentro do sistema.
-            </p>
-        </section>
-
-        <!-- Seção 3: Adicionar Lançamentos -->
-        <section class="animate-fade-up delay-200">
-            <h2 class="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-                <span class="mr-2">➕</span> 3. Adicionar Lançamentos
-            </h2>
-            <p class="text-gray-700 leading-relaxed">
-                Para registrar um lançamento financeiro, siga os passos abaixo. O processo é simples e garante que todas as movimentações sejam registradas corretamente no sistema.
-            </p>
-            
-            <h3 class="text-lg font-semibold text-gray-800 mt-4 flex items-center">
-                <span class="mr-2">📌</span> Como adicionar um lançamento:
-            </h3>
-            <ol class="list-decimal pl-6 text-gray-700 leading-relaxed mt-2">
-                <li>Selecione o mês em que deseja registrar o lançamento.</li>
-                <li>Clique em <strong class="text-blue-600">"Adicionar Lançamento"</strong> na página do mês selecionado.</li>
-                <li>Preencha os campos obrigatórios:
-                    <ul class="list-disc pl-6 mt-2">
-                        <li><strong>Data da movimentação</strong> 📅</li>
-                        <li><strong>Tipo de transação</strong> 🔄 (Outras receitas, Outras despesas, ACI recebida, ACI enviada)</li>
-                        <li><strong>Descrição da movimentação</strong> ✍️</li>
-                        <li><strong>Valor</strong> 💰 Informe o valor da movimentação.</li>
-                        <li><strong>Upload de Comprovantes</strong> 📎 Faça o upload de um comprovante (JPG, PNG ou PDF).</li>
-                    </ul>
-                </li>
-                <li>Clique em <strong class="text-blue-600">"Salvar"</strong> para registrar o lançamento.</li>
-            </ol>
-            
-            <p class="text-gray-700 mt-4 bg-blue-50 p-3 rounded-lg">
-                🎯 <strong>Importante:</strong> A inclusão de comprovantes é OBRIGATÓRIA para manter um registro completo e transparente.
-            </p>
-        </section>
-
-        <!-- Seção 4: Editar ou Excluir Lançamentos -->
-        <section class="animate-fade-up delay-300">
-            <h2 class="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-                <span class="mr-2">✏️</span> 4. Editar ou Excluir Lançamentos
-            </h2>
-            <p class="text-gray-700 leading-relaxed">
-                Se precisar atualizar ou remover um lançamento, o sistema oferece uma maneira rápida e fácil de realizar essas ações.
-            </p>
-            
-            <h3 class="text-lg font-semibold text-gray-800 mt-4 flex items-center">
-                <span class="mr-2">📌</span> Como editar ou excluir um lançamento:
-            </h3>
-            <ol class="list-decimal pl-6 text-gray-700 leading-relaxed mt-2">
-                <li>Localize o lançamento na lista de lançamentos do mês.</li>
-                <li>Para editar, clique em <strong class="text-blue-600">"Editar"</strong>.</li>
-                <li>Após editar, clique em <strong class="text-blue-600">"Salvar"</strong>.</li>
-                <li>Para excluir, clique em <strong class="text-red-600">"Excluir"</strong>.</li>
-                <li>Confirme a exclusão para evitar ações acidentais.</li>
-            </ol>
-            
-            <p class="text-gray-700 mt-4 bg-blue-50 p-3 rounded-lg">
-                🎯 <strong>Importante:</strong> Ao excluir, o comprovante relacionado também será removido do sistema.
-            </p>
-        </section>
-
-        <!-- Seção 5: Consultar Relatórios -->
-        <section class="animate-fade-up delay-400">
-            <h2 class="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-                <span class="mr-2">📊</span> 5. Consultar Relatórios
-            </h2>
-            <p class="text-gray-700 leading-relaxed">
-                O sistema oferece uma maneira fácil e rápida de consultar relatórios financeiros detalhados, tanto mensais quanto anuais, para facilitar o acompanhamento das movimentações.
-            </p>
-            
-            <h3 class="text-lg font-semibold text-gray-800 mt-4 flex items-center">
-                <span class="mr-2">📈</span> Tipos de Relatórios Disponíveis:
-            </h3>
-            <ul class="list-disc pl-6 text-gray-700 leading-relaxed mt-2">
-                <li><strong>Relatório Mensal:</strong> Detalhes sobre entradas, saídas e saldo final de cada mês.</li>
-                <li><strong>Relatório Anual:</strong> Panorama completo do ano, agregando todos os lançamentos mensais.</li>
-            </ul>
-            
-            <h3 class="text-lg font-semibold text-gray-800 mt-4 flex items-center">
-                <span class="mr-2">🔍</span> Como consultar os relatórios:
-            </h3>
-            <ol class="list-decimal pl-6 text-gray-700 leading-relaxed mt-2">
-                <li>Acesse <strong class="text-blue-600">Relatórios</strong> na página inicial.</li>
-                <li>Para o relatório anual, clique em <strong class="text-blue-600">"Exportar Relatório"</strong>.</li>
-                <li>Para comprovantes, clique em <strong class="text-blue-600">"Exportar Comprovantes"</strong>.</li>
-            </ol>
-        </section>
-
-        <!-- Seção 6: Dúvidas -->
-        <section class="animate-fade-up delay-500">
-            <h2 class="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-                <span class="mr-2">❓</span> 6. Dúvidas?
-            </h2>
-            <p class="text-gray-700 leading-relaxed">
-                Se tiver dúvidas ou precisar de assistência, entre em contato com o(a) Tesoureiro(a) da sua Federação ou Sinodal. Eles estão disponíveis para ajudar e esclarecer qualquer questão.
-            </p>
-            <ul class="list-disc pl-6 text-gray-700 leading-relaxed mt-2">
-                <li class="flex items-center"><span class="mr-2">📞</span> Ligue ou envie mensagem via WhatsApp.</li>
-                <li class="flex items-center"><span class="mr-2">👥</span> Participe de reuniões da Federação/Sinodal/Nacional.</li>
-            </ul>
-        </section>
+            <!-- Texto de Suporte -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Se ainda tiver dúvidas após assistir ao vídeo, envie uma mensagem na página de Dúvidas e Suporte.
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Animações -->
+<!-- Estilos -->
 <style>
+    /* Animação Simples */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .animate-fade-in {
         animation: fadeIn 0.6s ease-out;
     }
 
-    @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
-    .animate-fade-up {
-        animation: fadeUp 0.5s ease-out backwards;
-    }
-    .delay-100 { animation-delay: 0.1s; }
-    .delay-200 { animation-delay: 0.2s; }
-    .delay-300 { animation-delay: 0.3s; }
-    .delay-400 { animation-delay: 0.4s; }
-    .delay-500 { animation-delay: 0.5s; }
 </style>
 {% endblock %}

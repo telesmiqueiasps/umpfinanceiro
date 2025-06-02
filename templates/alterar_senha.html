@@ -1,115 +1,124 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-2xl shadow-2xl mt-12 animate-fade-in">
-    <!-- Título -->
-    <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-8 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
-        Alterar Senha
-    </h2>
-
-    <!-- Mensagens de Erro ou Sucesso -->
-    {% with messages = get_flashed_messages(with_categories=True) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                {% if category != 'success' %}
-                    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 animate-fade-up">
-                        <p>{{ message }}</p>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <!-- Formulário -->
-    <form method="POST" class="space-y-6">
-        <!-- Senha Atual -->
-        <div>
-            <label for="senha_atual" class="block text-sm font-semibold text-gray-700 mb-1">Senha Atual</label>
-            <input type="password" name="senha_atual" id="senha_atual" required
-                   class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
+        <!-- Cabeçalho -->
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-semibold text-blue-600">Alterar Senha</h2>
+            <a href="{{ url_for('index') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar ao início
+            </a>
         </div>
 
-        <!-- Nova Senha -->
-        <div>
-            <label for="nova_senha" class="block text-sm font-semibold text-gray-700 mb-1">Nova Senha</label>
-            <input type="password" name="nova_senha" id="nova_senha" required
-                   class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
-        </div>
+        <!-- Formulário em Bloco -->
+        <div class="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
+            <form method="POST" class="space-y-6">
+                <!-- Senha Atual -->
+                <div>
+                    <label for="senha_atual" class="block text-sm text-gray-600 font-medium">Senha Atual</label>
+                    <input type="password" name="senha_atual" id="senha_atual" required class="input-field">
+                </div>
 
-        <!-- Confirmar Nova Senha -->
-        <div>
-            <label for="confirmar_senha" class="block text-sm font-semibold text-gray-700 mb-1">Confirmar Nova Senha</label>
-            <input type="password" name="confirmar_senha" id="confirmar_senha" required
-                   class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200">
-        </div>
+                <!-- Nova Senha -->
+                <div>
+                    <label for="nova_senha" class="block text-sm text-gray-600 font-medium">Nova Senha</label>
+                    <input type="password" name="nova_senha" id="nova_senha" required class="input-field">
+                </div>
 
-        <!-- Botão Alterar Senha -->
-        <button type="submit"
-                class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 rounded-lg shadow-md hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
-            Alterar Senha
-        </button>
-    </form>
+                <!-- Confirmar Nova Senha -->
+                <div>
+                    <label for="confirmar_senha" class="block text-sm text-gray-600 font-medium">Confirmar Nova Senha</label>
+                    <input type="password" name="confirmar_senha" id="confirmar_senha" required class="input-field">
+                </div>
+
+                <!-- Botão Alterar Senha -->
+                <button type="submit" 
+                        class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200">
+                    Alterar Senha
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
-<!-- Modal de Sucesso -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            {% if category == 'success' %}
-                <div id="success-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50 animate-fade-in">
-                    <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full animate-pop-in">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-semibold text-green-700 flex items-center">
-                                <span class="mr-2">✅</span> Sucesso!
-                            </h2>
-                            <button onclick="document.getElementById('success-modal').style.display='none'" class="text-gray-500 hover:text-gray-700 text-2xl">
-                                ×
-                            </button>
-                        </div>
-                        <p class="text-gray-700">{{ message }}</p>
-                        <div class="mt-6 flex justify-end">
-                            <a href="{{ url_for('index') }}"
-                               class="bg-gradient-to-r from-green-600 to-green-700 text-white py-2 px-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200">
-                                Ok
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <script>
-                    setTimeout(function() {
-                        document.getElementById('success-modal').style.display = 'flex';
-                    }, 200);
-                </script>
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-<!-- Animações -->
+<!-- Estilos -->
 <style>
+    /* Campo de Entrada */
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 6px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Animação Simples */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .animate-fade-in {
         animation: fadeIn 0.6s ease-out;
     }
 
-    @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-up {
-        animation: fadeUp 0.4s ease-out;
-    }
-
-    @keyframes popIn {
-        0% { opacity: 0; transform: scale(0.9); }
-        60% { opacity: 1; transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    .animate-pop-in {
-        animation: popIn 0.5s ease-out;
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
 </style>
+
+<!-- Modal de Sucesso e Erro -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        {% if category == 'success' or category == 'danger' %}
+            <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-300">
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full border border-gray-200 transform transition-all duration-300 hover:scale-105 animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        {% if category == 'success' %}
+                            <h2 class="text-xl font-medium text-green-600">Sucesso!</h2>
+                        {% elif category == 'danger' %}
+                            <h2 class="text-xl font-medium text-red-600">Erro!</h2>
+                        {% endif %}
+                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" 
+                                class="text-gray-500 hover:text-gray-400 transition-colors duration-200">
+                            ×
+                        </button>
+                    </div>
+                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a href="{{ url_for('index') }}" 
+                           class="py-2 px-4 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105
+                                  {% if category == 'success' %} bg-green-600 hover:bg-green-700 
+                                  {% elif category == 'danger' %} bg-red-600 hover:bg-red-700 {% endif %}">
+                            Ok
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <script>
+                setTimeout(function() {
+                    document.getElementById('{{ category }}-modal').style.display = 'flex';
+                }, 200);
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endwith %}
+
 {% endblock %}

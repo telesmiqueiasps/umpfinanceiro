@@ -1,69 +1,55 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="max-w-5xl mx-auto bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-2xl shadow-2xl mt-10">
-    <h1 class="text-4xl font-extrabold text-gray-900 mb-10 text-center bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text animate-slide-in">
-        📌 Lançamentos
-    </h1>
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
 
-    <div class="mt-6">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-8 text-center flex items-center justify-center animate-fade-in">
-            <span class="mr-2">📅</span> Escolha um Mês
-        </h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {% for i in range(1, 13) %}
-                <a href="{{ url_for('mes', mes=i, ano=ano) }}" 
-                   class="block text-center py-4 px-5 rounded-xl shadow-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-base font-semibold 
-                          transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:from-blue-500 hover:to-indigo-500 
-                          animate-fade-up delay-{{ (i-1) }}">
-                    {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][i-1] }}
-                </a>
-            {% endfor %}
+{% block content %}
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
+        <!-- Cabeçalho -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Lançamentos</h1>
+            <a href="{{ url_for('index') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar ao início
+            </a>
         </div>
-    </div>    
+
+        <!-- Bloco de Escolha de Mês -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-medium text-blue-600 mb-6 text-center">Escolha um Mês</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {% for i in range(1, 13) %}
+                    <a href="{{ url_for('mes', mes=i, ano=ano) }}" 
+                       class="block text-center py-3 px-4 rounded-lg bg-blue-50 text-blue-600 text-base font-medium 
+                              transition-all duration-200 hover:bg-blue-100 hover:shadow-md animate-fade-in">
+                        {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][i-1] }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Animações -->
+<!-- Estilos -->
 <style>
-    /* Slide In */
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    .animate-slide-in {
-        animation: slideIn 0.4s ease-out;
-    }
-
-    /* Fade In */
+    /* Animação Simples */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .animate-fade-in {
-        animation: fadeIn 0.4s ease-out;
+        animation: fadeIn 0.6s ease-out;
     }
 
-    /* Fade Up */
-    @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
-    .animate-fade-up {
-        animation: fadeUp 0.3s ease-out backwards;
-    }
-
-    /* Classes de atraso dinâmico acelerado */
-    .delay-0 { animation-delay: 0s; }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.1s; }
-    .delay-3 { animation-delay: 0.15s; }
-    .delay-4 { animation-delay: 0.2s; }
-    .delay-5 { animation-delay: 0.25s; }
-    .delay-6 { animation-delay: 0.3s; }
-    .delay-7 { animation-delay: 0.35s; }
-    .delay-8 { animation-delay: 0.4s; }
-    .delay-9 { animation-delay: 0.45s; }
-    .delay-10 { animation-delay: 0.5s; }
-    .delay-11 { animation-delay: 0.55s; }
 </style>
+
 {% endblock %}

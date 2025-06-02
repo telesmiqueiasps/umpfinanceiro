@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" style="background-color: #E6ECEF;">
+    <div class="pt-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <!-- Header -->
+            <div class="mb-6 animate-fade-in">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-semibold text-blue-600">Gestão de Usuários</h1>
+                    <a href="{{ url_for('admin_consultar') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Voltar
+                    </a>
+                </div>
+                <p class="mt-2 text-sm text-gray-600">Cadastre, visualize, ative/desative ou edite usuários.</p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row justify-end gap-4 mb-6 animate-fade-in">
+                <a href="{{ url_for('cadastro') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Cadastrar Usuário
+                </a>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto animate-fade-in">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50 text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-medium">Nome</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium">Usuário</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium">Gestor</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium">Status</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-800">
+                        {% for u in usuarios %}
+                        <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 text-sm">{{ u.ump_federacao }}</td>
+                            <td class="px-4 py-3 text-sm">{{ u.username }}</td>
+                            <td class="px-4 py-3 text-sm">{{ u.gestor }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                {% if u.is_active %}
+                                    <span class="text-green-600 font-semibold">Ativo</span>
+                                {% else %}
+                                    <span class="text-red-600 font-semibold">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-sm space-x-2 flex items-center">
+                                {% if u.is_active %}
+                                    <a href="{{ url_for('desativar_usuario', id=u.id) }}" class="flex items-center text-red-600 hover:text-red-700 font-medium">
+                                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10" />
+                                        </svg>
+                                        Desativar
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('ativar_usuario', id=u.id) }}" class="flex items-center text-green-600 hover:text-green-700 font-medium">
+                                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4-4 4 4" />
+                                        </svg>
+                                        Ativar
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url_for('editar_usuario', id=u.id) }}" class="flex items-center text-yellow-600 hover:text-yellow-700 font-medium">
+                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Editar
+                                </a>
+                                <a href="{{ url_for('resetar_senha', id=u.id) }}" onclick="return confirm('Deseja realmente resetar a senha desse usuário?');" class="flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    </svg>
+                                    Resetar Senha
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category in ['success', 'danger'] %}
+                    <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-200">
+                        <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full animate-fade-in">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold {% if category == 'success' %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ 'Sucesso!' if category == 'success' else 'Erro!' }}
+                                </h2>
+                                <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400 text-xl">&times;</button>
+                            </div>
+                            <p class="text-gray-600 text-sm">{{ message }}</p>
+                            <div class="mt-4 flex justify-end">
+                                <a href="{{ url_for('usuarios_cadastrados') }}" class="px-4 py-2 rounded-lg text-white text-sm font-medium {% if category == 'success' %}bg-green-600 hover:bg-green-700{% else %}bg-red-600 hover:bg-red-700{% endif %} transition-all duration-200 shadow-md">
+                                    Ok
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        setTimeout(() => { document.getElementById('{{ category }}-modal').style.display = 'flex'; }, 200);
+                    </script>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+.shadow-md {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+</style>
+{% endblock %}

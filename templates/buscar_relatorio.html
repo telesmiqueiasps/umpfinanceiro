@@ -1,198 +1,141 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container py-5">
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
         <!-- Cabeçalho -->
-        <div class="text-center mb-5 animate-fade-in">
-            <h1 class="display-3 fw-bold text-dark">Buscar Relatórios Financeiros</h1>
-            <p class="lead text-muted fw-light mt-2">Explore seus relatórios de anos anteriores.</p>
-            <hr class="w-25 mx-auto mt-4 mb-0" style="border-top: 3px solid #007bff; opacity: 0.8;">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Buscar Relatórios Financeiros</h1>
+            <a href="{{ url_for('consultar') }}" class="text-blue-600 text-sm font-medium hover:underline">Voltar à Consulta</a>
         </div>
 
-        <!-- Mensagens flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="row justify-content-center mb-5">
-                    <div class="col-md-8">
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-lg rounded-4 animate-slide-up" role="alert">
-                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'warning' else 'times-circle' if category == 'danger' else 'check-circle' }} me-2"></i>
-                                <strong>{{ message }}</strong>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
+        <!-- Bloco Principal -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <p class="text-sm text-gray-600 text-center mb-6">Explore seus relatórios de anos anteriores.</p>
+
+            <!-- Formulário -->
+            <div class="max-w-md mx-auto">
+                <form method="POST" action="{{ url_for('buscar_relatorio') }}" class="space-y-6">
+                    <div>
+                        <label for="ano" class="block text-sm text-gray-600 font-medium">Escolha o Ano</label>
+                        <select name="ano" id="ano" class="input-field" required>
+                            <option value="" disabled selected>Selecione um ano</option>
+                            {% for ano in anos %}
+                                <option value="{{ ano }}">{{ ano }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" 
+                                class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 font-medium">
+                            Buscar Relatório
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resultado do Relatório -->
+            {% if relatorio_encontrado %}
+                <div class="mt-8">
+                    <h2 class="text-xl font-medium text-blue-600 mb-4 text-center">Relatório Encontrado</h2>
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-600 mb-4">{{ relatorio_encontrado }}</p>
+                        <div class="flex justify-center space-x-4">
+                            <a href="{{ url_for('visualizar_relatorio', filename=relatorio_encontrado) }}" 
+                               target="_blank" 
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200">
+                                Visualizar
+                            </a>
+                        </div>
+                        <div class="mt-4 border border-gray-200 rounded-lg overflow-hidden" style="height: 600px;">
+                            <iframe src="{{ url_for('visualizar_relatorio', filename=relatorio_encontrado) }}" 
+                                    allowfullscreen 
+                                    style="width: 100%; height: 100%; border: none;"></iframe>
+                        </div>
                     </div>
                 </div>
             {% endif %}
-        {% endwith %}
-
-        <!-- Formulário -->
-        <div class="row justify-content-center mb-5">
-            <div class="col-md-6">
-                <div class="card shadow-lg border-0 rounded-4 bg-gradient-form animate-slide-up">
-                    <div class="card-body p-5">
-                        <form method="POST" action="{{ url_for('buscar_relatorio') }}">
-                            <div class="mb-4 position-relative">
-                                <label for="ano" class="form-label fw-semibold text-dark">Escolha o Ano</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-0 rounded-start-3 shadow-sm">
-                                        <i class="fas fa-calendar-alt text-primary"></i>
-                                    </span>
-                                    <select name="ano" id="ano" class="form-select rounded-end-3 py-3 shadow-sm" required>
-                                        <option value="" disabled selected>Selecione um ano</option>
-                                        {% for ano in anos %}
-                                            <option value="{{ ano }}">{{ ano }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary btn-lg px-5 py-2 fw-semibold shadow-sm transition-hover">
-                                    <i class="fas fa-search me-2"></i> Buscar Relatório
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
+    </div>
+</div>
 
-        <!-- Resultado do relatório -->
-        {% if relatorio_encontrado %}
-            <div class="row justify-content-center animate-slide-up">
-                <div class="col-md-10">
-                    <div class="card shadow-lg border-0 rounded-4 overflow-hidden bg-white">
-                        <div class="card-header bg-gradient-success text-white py-4">
-                            <h3 class="mb-0 fw-semibold"><i class="fas fa-file-pdf me-2"></i> Relatório Encontrado</h3>
-                        </div>
-                        <div class="card-body p-5">
-                            <div class="row align-items-center">
-                                <div class="col-md-4 text-center mb-4 mb-md-0">
-                                    <p class="fs-5 text-muted mb-4">{{ relatorio_encontrado }}</p>
-                                    <a href="{{ url_for('visualizar_relatorio', filename=relatorio_encontrado) }}" 
-                                       target="_blank" 
-                                       class="btn btn-outline-success btn-lg px-5 py-2 fw-semibold shadow-sm transition-hover">
-                                        <i class="fas fa-eye me-2"></i> Visualizar
-                                    </a>
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="shadow-lg rounded-3 overflow-hidden" style="height: 600px;">
-                                        <iframe src="{{ url_for('visualizar_relatorio', filename=relatorio_encontrado) }}" 
-                                                allowfullscreen 
-                                                style="width: 100%; height: 100%; border: none;"></iframe>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+<!-- Estilos -->
+<style>
+    /* Campo de Entrada */
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 6px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Animação Simples */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+<!-- Modal de Sucesso e Erro -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        {% if category == 'success' or category == 'danger' or category == 'warning' %}
+            <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-300">
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full border border-gray-200 transform transition-all duration-300 hover:scale-105 animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        {% if category == 'success' %}
+                            <h2 class="text-xl font-medium text-green-600">Sucesso!</h2>
+                        {% elif category == 'danger' %}
+                            <h2 class="text-xl font-medium text-red-600">Erro!</h2>
+                        {% elif category == 'warning' %}
+                            <h2 class="text-xl font-medium text-yellow-600">Aviso!</h2>
+                        {% endif %}
+                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" 
+                                class="text-gray-500 hover:text-gray-400 transition-colors duration-200">
+                            ×
+                        </button>
+                    </div>
+                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" 
+                                class="py-2 px-4 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105
+                                       {% if category == 'success' %} bg-green-600 hover:bg-green-700 
+                                       {% elif category == 'danger' %} bg-red-600 hover:bg-red-700 
+                                       {% elif category == 'warning' %} bg-yellow-600 hover:bg-yellow-700 {% endif %}">
+                            Ok
+                        </button>
                     </div>
                 </div>
             </div>
+            <script>
+                setTimeout(function() {
+                    document.getElementById('{{ category }}-modal').style.display = 'flex';
+                }, 200);
+            </script>
         {% endif %}
-    </div>
+    {% endfor %}
+{% endif %}
+{% endwith %}
 
-    <!-- Estilos personalizados -->
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(to bottom, #f0f4f8, #e6ecef);
-            min-height: 100vh;
-        }
-        .text-dark { color: #2c3e50 !important; }
-        .text-muted { color: #7f8c8d !important; }
-        .text-primary { color: #007bff !important; }
-
-        /* Gradientes */
-        .bg-gradient-form {
-            background: linear-gradient(135deg, #ffffff, #f8f9fa);
-        }
-        .bg-gradient-success {
-            background: linear-gradient(135deg, #28a745, #1e7e34);
-        }
-
-        /* Cards */
-        .card {
-            border-radius: 1.25rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-        }
-        .card-header {
-            border-bottom: none;
-        }
-
-        /* Formulário */
-        .form-select, .btn {
-            border-radius: 0.75rem;
-        }
-        .form-select {
-            background-color: #fff;
-            border: 1px solid #ced4da;
-            padding: 0.75rem 1.25rem;
-            font-size: 1.1rem;
-        }
-        .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-        }
-        .input-group-text {
-            background-color: #fff;
-            border: 1px solid #ced4da;
-            border-right: none;
-        }
-
-        /* Botões */
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-            padding: 0.75rem 2rem;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .btn-outline-success {
-            border-color: #28a745;
-            color: #28a745;
-            padding: 0.75rem 2rem;
-        }
-        .btn-outline-success:hover {
-            background-color: #28a745;
-            color: #fff;
-        }
-        .transition-hover {
-            transition: all 0.3s ease;
-        }
-        .transition-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Animações */
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-in-out;
-        }
-        .animate-slide-up {
-            animation: slideUp 0.6s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        /* Ajustes gerais */
-        .shadow-lg { box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1); }
-        .rounded-4 { border-radius: 1.25rem; }
-    </style>
 {% endblock %}
 
 {% block extra_head %}
-    <!-- Google Fonts (Roboto) -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 {% endblock %}

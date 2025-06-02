@@ -1,60 +1,62 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="max-w-6xl mx-auto bg-white bg-opacity-95 backdrop-blur-lg p-10 rounded-3xl shadow-xl mt-12 mb-12 animate-fade-in">
-    <!-- Cabeçalho -->
-    <div class="text-center mb-8">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
-            Consultar Relatórios e Comprovantes
-        </h1>
-        <p class="mt-4 text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            Esta página permite que você consulte relatórios financeiros e comprovantes de anos anteriores.
-        </p>
-        <hr class="w-16 mx-auto mt-6 mb-0 border-t-2 border-indigo-500 opacity-80">
-    </div>
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
 
-    <!-- Botões centralizados -->
-    <div class="flex flex-col items-center space-y-6">
-        <!-- Linha de Relatórios -->
-        <div class="flex justify-center space-x-6">
-            <a href="{{ url_for('buscar_relatorio') }}" 
-               class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white px-8 py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 flex items-center text-lg font-semibold">
-                <span class="mr-3"><i class="fas fa-file-alt"></i></span> Consultar Relatórios
+{% block content %}
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
+        <!-- Cabeçalho -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Consultar Relatórios e Comprovantes</h1>
+            <a href="{{ url_for('index') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar ao início
             </a>
         </div>
-        <!-- Linha de Comprovantes -->
-        <div class="flex justify-center space-x-6">
-            <a href="{{ url_for('buscar_comprovantes') }}" 
-               class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-8 py-3 rounded-xl shadow-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 flex items-center text-lg font-semibold">
-                <span class="mr-3"><i class="fas fa-receipt"></i></span> Consultar Comprovantes
-            </a>
+
+        <!-- Bloco Principal -->
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <p class="text-sm text-gray-600 mb-6">
+                Esta página permite que você consulte relatórios financeiros e comprovantes de anos anteriores.
+            </p>
+            <div class="flex flex-col items-center space-y-4">
+                <a href="{{ url_for('buscar_relatorio') }}" 
+                   class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 font-medium">
+                    Consultar Relatórios
+                </a>
+                <a href="{{ url_for('buscar_comprovantes') }}" 
+                   class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 font-medium">
+                    Consultar Comprovantes
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Estilos personalizados -->
+<!-- Estilos -->
 <style>
+    /* Animação Simples */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .animate-fade-in {
-        animation: fadeIn 0.8s ease-out forwards;
+        animation: fadeIn 0.6s ease-out;
     }
-    .bg-clip-text {
-        -webkit-background-clip: text;
-        background-clip: text;
-    }
-    .shadow-lg {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    }
-    .rounded-3xl {
-        border-radius: 1.5rem;
+
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
 </style>
 {% endblock %}
 
 {% block extra_head %}
-    <!-- Font Awesome para ícones -->
+    <!-- Font Awesome para ícones (opcional, removido dos botões neste ajuste) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-{% endblock %} 
+{% endblock %}

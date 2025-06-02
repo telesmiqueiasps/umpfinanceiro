@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" style="background-color: #E6ECEF;">
+    <div class="pt-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto">
+            <!-- Header -->
+            <div class="mb-6 animateFadeIn">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-semibold text-blue-600">Gerenciar Suporte</h1>
+                    <a href="{{ url_for('suporte') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Voltar
+                    </a>
+                </div>
+                <p class="mt-2 text-sm text-gray-600">Gerencie as mensagens de suporte enviadas pelos usuários.</p>
+            </div>
+
+            <!-- Messages -->
+            <div class="bg-white rounded-lg shadow-md p-6 animateFadeIn">
+                <h2 class="text-xl font-semibold text-blue-600 mb-4">Mensagens de Suporte</h2>
+                {% if mensagens %}
+                    {% for msg in mensagens %}
+                    <div class="border-t border-gray-200 py-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-600">
+                                    <strong>Enviado por:</strong> {{ msg.usuario.username if msg.usuario else 'Usuário Desconhecido' }} em {{ msg.data_envio.strftime('%d/%m/%Y') }}
+                                </p>
+                                <p class="text-sm text-gray-800 mt-2">{{ msg.mensagem | e }}</p>
+                            </div>
+                        </div>
+                        {% if msg.resposta %}
+                        <div class="mt-2 pl-4 border-l-2 border-blue-600">
+                            <p class="text-sm text-gray-600">
+                                <strong>Respondido por:</strong> {{ msg.usuario_resposta.username if msg.usuario_resposta else 'Usuário Desconhecido' }} em {{ msg.data_resposta.strftime('%d/%m/%Y') }}
+                            </p>
+                            <p class="text-sm text-gray-800 mt-2">{{ msg.resposta | e }}</p>
+                        </div>
+                        {% else %}
+                        <div class="mt-4">
+                            <form method="POST" action="{{ url_for('admin_suporte') }}">
+                                <input type="hidden" name="mensagem_id" value="{{ msg.id }}">
+                                <div class="mb-4">
+                                    <label for="resposta-{{ msg.id }}" class="block text-sm font-medium text-gray-600">Sua Resposta</label>
+                                    <textarea name="resposta" id="resposta-{{ msg.id }}" rows="3" class="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 text-sm" required></textarea>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                        </svg>
+                                        Responder
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-sm text-gray-600">Nenhuma mensagem de suporte encontrada.</p>
+                {% endif %}
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category in ['success', 'error'] %}
+                            <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-200">
+                                <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full animateFadeIn">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 mr-2 {% if category == 'success' %}text-green-600{% else %}text-red-600{% endif %}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                {% if category == 'success' %}
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                {% else %}
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                {% endif %}
+                                            </svg>
+                                            <h2 class="text-xl font-semibold {% if category == 'success' %}text-green-600{% else %}text-red-600{% endif %}">
+                                                {{ 'Sucesso!' if category == 'success' else 'Erro!' }}
+                                            </h2>
+                                        </div>
+                                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400 text-xl">×</button>
+                                    </div>
+                                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                                    <div class="mt-4 flex justify-end">
+                                        <a href="{{ url_for('admin_suporte') }}" class="px-4 py-2 rounded-lg text-white text-sm font-medium {% if category == 'success' %}bg-green-600 hover:bg-green-700{% else %}bg-red-600 hover:bg-red-700{% endif %} transition-all duration-200 shadow-md">
+                                            Ok
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                                setTimeout(() => { document.getElementById('{{ category }}-modal').style.display = 'flex'; }, 200);
+                            </script>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animateFadeIn {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+.shadow-md {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}

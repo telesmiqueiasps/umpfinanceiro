@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" style="background-color: #E6ECEF;">
+    <!-- Main Content -->
+    <div class="pt-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <!-- Header Section -->
+            <div class="mb-8 animate-fade-in">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-4xl font-semibold text-blue-600">Detalhes do Sócio</h1>
+                </div>
+                <p class="mt-2 text-sm text-gray-600">Informações e mensalidades de {{ socio.nome }}.</p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-8 animate-fade-in">
+                <a href="{{ url_for('listar_socios') }}"
+                   class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Voltar
+                </a>
+                <a href="{{ url_for('cadastrar_mensalidade', id_socio=socio.id) }}"
+                   class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Cadastrar Mensalidade
+                </a>
+                {% if socio.tipo == 'Ativo' %}
+                <a href="{{ url_for('cadastrar_aci_pagamento', id_socio=socio.id) }}"
+                class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Cadastrar Pagamento ACI
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Socio Info -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+                <h3 class="text-2xl font-semibold text-blue-600 mb-4">Informações do Sócio</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <p class="text-gray-600"><strong>Nome:</strong> {{ socio.nome }}</p>
+                    <p class="text-gray-600"><strong>Tipo:</strong> {{ socio.tipo }}</p>
+                </div>
+            </div>
+
+            <!-- Mensalidade Status -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+                <h3 class="text-2xl font-semibold text-blue-600 mb-4">Status Mensalidades {{ current_year }}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <p class="text-gray-600"><strong>Meses Pagos:</strong> {% if meses_pagos %}{{ meses_pagos|join(', ') }}{% else %}Nenhum{% endif %}</p>
+                    <p class="text-gray-600"><strong>Meses Pendentes:</strong> {% if meses_pendentes %}{{ meses_pendentes|join(', ') }}{% else %}Nenhum{% endif %}</p>
+                </div>
+            </div>
+
+            <!-- ACI Status (for Ativo socios) -->
+            {% if aci_data %}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+                <h3 class="text-2xl font-semibold text-blue-600 mb-4">Status ACI {{ current_year }}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <p class="text-gray-600"><strong>Valor Esperado:</strong> {{ aci_data.valor_esperado }}</p>
+                    <p class="text-gray-600"><strong>Valor Pago:</strong> {{ aci_data.valor_pago }}</p>
+                    <p class="text-gray-600"><strong>Valor Restante:</strong> {{ aci_data.valor_restante }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Mensalidades List -->
+            <div class="bg-white rounded-lg shadow-md mb-8 animate-fade-in">
+                <h3 class="text-2xl font-semibold text-blue-600 p-6">Mensalidades</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white text-sm">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Ano</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Mês</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Valor Pago</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Data de Pagamento</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600">
+                            {% if mensalidades %}
+                                {% for mensalidade in mensalidades %}
+                                <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-2">{{ mensalidade.ano }}</td>
+                                    <td class="px-4 py-2">{{ mensalidade.mes }}</td>
+                                    <td class="px-4 py-2">{{ mensalidade.valor_pago }}</td>
+                                    <td class="px-4 py-2">{{ mensalidade.data_pagamento }}</td>
+                                    <td class="px-4 py-2">
+                                        <form method="POST" action="{{ url_for('excluir_mensalidade', id=mensalidade.id) }}" class="inline">
+                                            <button type="submit"
+                                                    onclick="return confirm('Deseja realmente excluir esta mensalidade?');"
+                                                    class="text-red-600 hover:underline font-medium flex items-center">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a2 2 0 012 2v2H8V5a2 2 0 012-2z" />
+                                                </svg>
+                                                Excluir
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="px-4 py-2 text-center text-gray-500">Nenhuma mensalidade registrada.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ACI Pagamentos List (for Ativo socios) -->
+            {% if aci_data %}
+            <div class="bg-white rounded-lg shadow-md animate-fade-in">
+                <h3 class="text-2xl font-semibold text-blue-600 p-6">Pagamentos ACI</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white text-sm">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Ano</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Valor Pago</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Data de Pagamento</th>
+                                <th class="px-4 py-2 text-left text-blue-600 font-medium">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600">
+                            {% if aci_data.pagamentos %}
+                                {% for pagamento in aci_data.pagamentos %}
+                                <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-2">{{ current_year }}</td>
+                                    <td class="px-4 py-2">{{ pagamento.valor_pago }}</td>
+                                    <td class="px-4 py-2">{{ pagamento.data_pagamento }}</td>
+                                    <td class="px-4 py-2">
+                                        <form method="POST" action="{{ url_for('excluir_aci_pagamento', id=pagamento.id) }}" class="inline">
+                                            <button type="submit"
+                                                    onclick="return confirm('Deseja realmente excluir este pagamento ACI?');"
+                                                    class="text-red-600 hover:underline font-medium flex items-center">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a2 2 0 012 2v2H8V5a2 2 0 012-2z" />
+                                                </svg>
+                                                Excluir
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">Nenhum pagamento ACI registrado.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Modal de Sucesso e Erro -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'success' or category == 'error' %}
+                        <div id="{{ category }}-modal"
+                             class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-lg transform transition-transform duration-300 {% if category == 'success' %}border-l-4 border-green-600{% else %}border-l-4 border-red-600{% endif %} translate-x-full z-50">
+                            <div class="p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h2 class="text-xl font-semibold {% if category == 'success' %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {% if category == 'success' %}Sucesso!{% else %}Erro!{% endif %}
+                                    </h2>
+                                    <button onclick="document.getElementById('{{ category }}-modal').classList.add('translate-x-full')"
+                                            class="text-gray-500 hover:text-gray-400 text-xl font-bold">×</button>
+                                </div>
+                                <p class="text-gray-600 text-sm">{{ message }}</p>
+                                <div class="mt-4 text-right">
+                                    <a href="{{ url_for('detalhes_socio', id_socio=socio.id) }}"
+                                       class="inline-block px-4 py-2 rounded-md font-medium text-white
+                                              {% if category == 'success' %}bg-green-600 hover:bg-green-700
+                                              {% else %}bg-red-600 hover:bg-red-700{% endif %} transition-all duration-200">
+                                        Ok
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            setTimeout(() => {
+                                document.getElementById('{{ category }}-modal').classList.remove('translate-x-full');
+                            }, 200);
+                        </script>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<!-- Estilos -->
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+        table {
+            font-size: 0.875rem;
+        }
+        th, td {
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}

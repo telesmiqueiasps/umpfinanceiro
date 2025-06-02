@@ -1,121 +1,166 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.min.css" rel="stylesheet">
+<link href="https://cdn.tailwindcss.com/3.4.3" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-    <div class="max-w-4xl mx-auto p-8 bg-white shadow-xl rounded-lg mt-8 border-t-4 border-blue-600">
-        <h1 class="text-3xl font-bold mb-6 text-center text-blue-900">Configurações</h1>
+<div class="py-8 px-6 bg-gray-100 min-h-screen" style="background-color: #E6ECEF;">
+    <div class="max-w-5xl mx-auto">
+        <!-- Cabeçalho -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-blue-600">Configurações</h1>
+            <a href="{{ url_for('index') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Voltar ao início
+            </a>
+        </div>
 
-        <!-- Exibir mensagem de erro se o e-mail já estiver cadastrado -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    {% if category == 'danger' %}
-                        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                            {{ message }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" class="space-y-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-                <!-- Campo de E-mail -->
-                <div class="sm:col-span-2 w-full">
-                    <label class="block text-sm font-semibold text-gray-800">UMP/Federação ou Sinodal:</label>
-                    <input type="text" name="ump_federacao" value="{{ config.ump_federacao or '' }}" required class="input-field">
-                </div>
-
-                <div class="sm:col-span-2 w-full">
-                    <label class="block text-sm font-semibold text-gray-800">Federação/Sínodo:</label>
-                    <input type="text" name="federacao_sinodo" value="{{ config.federacao_sinodo or '' }}" required class="input-field">
-                </div>
-
-                <div class="sm:col-span-2 w-full">
-                    <label class="block text-sm font-semibold text-gray-800">Ano Vigente:</label>
-                    <input type="number" name="ano_vigente" value="{{ config.ano_vigente or '' }}" required class="input-field">
-                </div>
-
-                <div class="w-full">
-                    <label class="block text-sm font-semibold text-gray-800">Sócios Ativos:</label>
-                    <input type="number" name="socios_ativos" value="{{ config.socios_ativos or '' }}" required class="input-field">
-                </div>
-
-                <div class="w-full">
-                    <label class="block text-sm font-semibold text-gray-800">Sócios Cooperadores:</label>
-                    <input type="number" name="socios_cooperadores" value="{{ config.socios_cooperadores or '' }}" required class="input-field">
-                </div>
-
-                <div class="sm:col-span-2 w-full">
-                    <label class="block text-sm font-semibold text-gray-800">Tesoureiro Responsável:</label>
-                    <input type="text" name="tesoureiro_responsavel" value="{{ config.tesoureiro_responsavel or '' }}" required class="input-field">
-                </div>
-
-                <div class="sm:col-span-2 w-full">
-                    <label class="block text-sm font-semibold text-gray-800">Saldo Inicial:</label>
-                    <input type="number" name="saldo_inicial" step="0.01" value="{{ config.saldo_inicial or '' }}" required class="input-field">
-                </div>
-
-                <div class="sm:col-span-2 w-full">
-                    <label class="block text-sm font-semibold text-gray-800">E-mail:</label>
-                    <input type="email" name="email" value="{{ config.email or '' }}" required class="input-field">
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <button type="submit" class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all">
-                    Salvar Configurações
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <style>
-        .input-field {
-            width: 100%;
-            max-width: 500px;
-            padding: 10px;
-            border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            outline: none;
-            transition: border 0.2s, box-shadow 0.2s;
-        }
-
-        .input-field:focus {
-            border-color: #4c51bf;
-            box-shadow: 0 0 6px rgba(76, 81, 191, 0.3);
-        }
-    </style>
-
-    <!-- Modal de Sucesso -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                {% if category == 'success' %}
-                    <div id="success-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50">
-                        <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-semibold text-green-600">Sucesso!</h2>
-                                <button onclick="document.getElementById('success-modal').style.display='none'" class="text-gray-500">
-                                    &times;
-                                </button>
-                            </div>
-                            <p class="text-gray-700">{{ message }}</p>
-                            <div class="mt-4 flex justify-end">
-                                <a href="{{ url_for('index') }}" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
-                                    Ok
-                                </a>
-                            </div>
-                        </div>
+        <!-- Formulário em Bloco -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <form method="POST" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- UMP/Federação -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">
+                            {% if config and config.sinodal == 'Sim' %}
+                                Sinodal
+                            {% elif config and config.gestor == 'Sim' %}
+                                Federação
+                            {% else %}
+                                UMP
+                            {% endif %}
+                        </label>
+                        <input type="text" name="ump_federacao" value="{{ config.ump_federacao or '' }}" required class="input-field">
                     </div>
-                    <script>
-                        setTimeout(function() {
-                            document.getElementById('success-modal').style.display = 'flex';
-                        }, 200);
-                    </script>
-                {% endif %}
-            {% endfor %}
+
+                    <!-- Federação/Sínodo -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">
+                            {% if config and config.sinodal == 'Sim' %}
+                                Sínodo
+                            {% elif config and config.gestor == 'Sim' %}
+                                Presbitério
+                            {% else %}
+                                Federação
+                            {% endif %}
+                        </label>
+                        <input type="text" name="federacao_sinodo" value="{{ config.federacao_sinodo or '' }}" required class="input-field">
+                    </div>
+
+                    <!-- Ano Vigente -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">Ano Vigente</label>
+                        <input type="number" name="ano_vigente" value="{{ config.ano_vigente or '' }}" required class="input-field">
+                    </div>
+
+                    <!-- Tesoureiro Responsável -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">Tesoureiro Responsável</label>
+                        <input type="text" name="tesoureiro_responsavel" value="{{ config.tesoureiro_responsavel or '' }}" required class="input-field">
+                    </div>
+
+                    <!-- Presidente Responsável -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">Presidente Responsável</label>
+                        <input type="text" name="presidente_responsavel" value="{{ config.presidente_responsavel or '' }}" required class="input-field">
+                    </div>
+
+                    <!-- Saldo Inicial -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">Saldo Inicial</label>
+                        <input type="number" name="saldo_inicial" step="0.01" value="{{ config.saldo_inicial or '' }}" required class="input-field">
+                    </div>
+
+                    <!-- E-mail -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">E-mail</label>
+                        <input type="email" name="email" value="{{ config.email or '' }}" required class="input-field">
+                    </div>
+                </div>
+
+                <!-- Botão de Salvar -->
+                <div class="mt-6">
+                    <button type="submit" class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200">
+                        Salvar Configurações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos -->
+<style>
+    /* Campo de Entrada */
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 6px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Animação Simples */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Ajustes de Layout */
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+<!-- Modal de Sucesso e Erro -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        {% if category == 'success' or category == 'danger' %}
+            <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50 transition-opacity duration-300">
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full border border-gray-200 transform transition-all duration-300 hover:scale-105 animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        {% if category == 'success' %}
+                            <h2 class="text-xl font-medium text-green-600">Sucesso!</h2>
+                        {% elif category == 'danger' %}
+                            <h2 class="text-xl font-medium text-red-600">Erro!</h2>
+                        {% endif %}
+                        <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400 transition-colors duration-200">
+                            ×
+                        </button>
+                    </div>
+                    <p class="text-gray-600 text-sm">{{ message }}</p>
+                    <div class="mt-4 flex justify-end">
+                        <a href="{{ url_for('index') }}" 
+                           class="py-2 px-4 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105
+                                  {% if category == 'success' %} bg-green-600 hover:bg-green-700 
+                                  {% elif category == 'danger' %} bg-red-600 hover:bg-red-700 {% endif %}">
+                            Ok
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <script>
+                setTimeout(function() {
+                    document.getElementById('{{ category }}-modal').style.display = 'flex';
+                }, 200);
+            </script>
         {% endif %}
-    {% endwith %}
+    {% endfor %}
+{% endif %}
+{% endwith %}
 
 {% endblock %}
