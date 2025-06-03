@@ -7,7 +7,7 @@ from datetime import date
 db = SQLAlchemy()
 
 class Configuracao(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     admin = db.Column(db.Integer, nullable=False)
     gestor = db.Column(db.String(100), nullable=False)
@@ -26,7 +26,7 @@ class Configuracao(db.Model):
 
 class Financeiro(db.Model): # Criei essa tabela nem sei pq, por enquanto ainda sem utilização
     __tablename__ = 'financeiro'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, nullable=False)
     data = db.Column(db.Date)  
     tipo = db.Column(db.String(50))
@@ -35,7 +35,7 @@ class Financeiro(db.Model): # Criei essa tabela nem sei pq, por enquanto ainda s
 class Lancamento(db.Model):
     __tablename__ = 'lancamento'  
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     id_lancamento = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     data = db.Column(db.Date, nullable=False)
@@ -50,7 +50,7 @@ class Lancamento(db.Model):
 class SaldoFinal(db.Model):
     __tablename__ = 'saldo_final'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     mes = db.Column(db.Integer, nullable=False)
     ano = db.Column(db.Integer, nullable=False)
@@ -65,7 +65,7 @@ class SaldoFinal(db.Model):
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuario'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     senha = db.Column(db.String(256), nullable=False)  
     is_active = db.Column(db.Integer, nullable=False, default=1) # Aqui usei is active por causa da compatibilidade com Flask-Login
@@ -85,14 +85,14 @@ class Usuario(db.Model, UserMixin):
 
 
 class Socio(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     nome = db.Column(db.String(100), nullable=False)
     tipo = db.Column(db.String(20), nullable=False)  # 'Ativo' or 'Cooperador'
 
 
 class Mensalidade(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_socio = db.Column(db.Integer, db.ForeignKey('socio.id'), nullable=False)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     ano = db.Column(db.Integer, nullable=False)
@@ -107,7 +107,7 @@ class Mensalidade(db.Model):
 
 
 class AciValorAno(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     ano = db.Column(db.Integer, nullable=False)
     valor = db.Column(db.Float, nullable=False)
@@ -117,7 +117,7 @@ class AciValorAno(db.Model):
     )
 
 class AciPagamento(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_socio = db.Column(db.Integer, db.ForeignKey('socio.id'), nullable=False)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     ano = db.Column(db.Integer, nullable=False)
@@ -126,7 +126,7 @@ class AciPagamento(db.Model):
 
 class SuporteMensagem(db.Model):
     __tablename__ = 'suporte_mensagem'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     mensagem = db.Column(db.Text, nullable=False)
     data_envio = db.Column(db.Date, nullable=False, default=date.today)
