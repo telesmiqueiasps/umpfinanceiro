@@ -68,7 +68,7 @@ class Usuario(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     senha = db.Column(db.String(256), nullable=False)  
-    is_active = db.Column(db.Boolean, default=True)  # Aqui usei is active por causa da compatibilidade com Flask-Login
+    is_active = db.Column(db.Integer, nullable=False, default=1) # Aqui usei is active por causa da compatibilidade com Flask-Login
 
     def verificar_senha(self, senha):
         """Verifica a senha sem hash (comparação direta)"""
@@ -78,10 +78,11 @@ class Usuario(db.Model, UserMixin):
         """Armazena a senha diretamente"""
         self.senha = senha
 
-    def __init__(self, username, senha, is_active=True):
+    def __init__(self, username, senha, is_active=1):
         self.username = username
-        self.senha = senha  # a senha está sem hash por enquanto
-        self.is_active = is_active
+        self.senha = senha
+        self.is_active = 1 if is_active in [True, 1] else 0
+
 
 class Socio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
