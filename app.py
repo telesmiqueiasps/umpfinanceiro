@@ -26,7 +26,7 @@ from flask_compress import Compress
 app = Flask(__name__)
 app.jinja_env.filters['formatar_moeda'] = formatar_moeda
 app.secret_key = 'chave_secreta_ump_financeiro'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://umpfinanceirodb_user:M8BfQlkjaioCllDXVAyL0lJ79aq9ePfi@dpg-d0vefmemcj7s73eipci0-a/umpfinanceirodb')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://umpfinanceirodb_user:M8BfQlkjaioCllDXVAyL0lJ79aq9ePfi@dpg-d0vefmemcj7s73eipci0-a.oregon-postgres.render.com/umpfinanceirodb')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 Compress(app)
 
