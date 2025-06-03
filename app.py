@@ -1768,7 +1768,7 @@ def cadastro():
         gestor = request.form.get('gestor', 'Não')  # Obtém o valor do campo gestor (padrão: "Não")
 
         # Cria o novo usuário com is_active = 1
-        novo_usuario = Usuario(username=username, senha=senha, is_active=True)
+        novo_usuario = Usuario(username=username, senha=senha, is_active=1)
         db.session.add(novo_usuario)
         db.session.commit()
 
@@ -1839,7 +1839,7 @@ def desativar_usuario(id):
     usuario = Usuario.query.get_or_404(id)
     config = Configuracao.query.filter_by(id_usuario=id, admin=current_user.id).first()
     if config:
-        usuario.is_active = False
+        usuario.is_active = 0
         db.session.commit()
         flash('Usuário desativado com sucesso.', 'success')
 
@@ -1853,7 +1853,7 @@ def ativar_usuario(id):
     usuario = Usuario.query.get_or_404(id)
     config = Configuracao.query.filter_by(id_usuario=id, admin=current_user.id).first()
     if config:
-        usuario.is_active = False
+        usuario.is_active = 1
         db.session.commit()
         flash('Usuário ativado com sucesso.', 'success')
 
@@ -2602,7 +2602,7 @@ def atualizar_socios_usuario():
             .join(Usuario, Configuracao.id_usuario == Usuario.id)
             .filter(
                 Configuracao.admin == current_user.id,
-                Usuario.is_active == True
+                Usuario.is_active == 1
             )
             .all()
         )
@@ -2615,7 +2615,7 @@ def atualizar_socios_usuario():
             .join(Usuario, Configuracao.id_usuario == Usuario.id)
             .filter(
                 Configuracao.admin.in_(ids_subordinados_diretos),
-                Usuario.is_active == True
+                Usuario.is_active == 1
             )
             .all()
         )
