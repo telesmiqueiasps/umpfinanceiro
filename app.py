@@ -21,6 +21,8 @@ from formatador import formatar_moeda
 import uuid
 import math
 from flask_compress import Compress
+from calendar import monthrange
+
 
 
 app = Flask(__name__)
@@ -441,8 +443,14 @@ def mes(mes, ano):
     saldo_inicial = obter_saldo_inicial(mes, ano)
 
     # Buscar os lançamentos do mês para o usuário logado
+    # Calcula o primeiro e o último dia do mês
+    data_inicio = date(ano, mes, 1)
+    ultimo_dia = monthrange(ano, mes)[1]
+    data_fim = date(ano, mes, ultimo_dia)
+    
+    # Consulta no banco
     lancamentos = Lancamento.query.filter(
-        Lancamento.data.like(f"{ano}-{mes:02d}%"),
+        Lancamento.data.between(data_inicio, data_fim),
         Lancamento.id_usuario == current_user.id
     ).all()
 
