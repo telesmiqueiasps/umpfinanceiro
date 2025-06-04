@@ -2494,6 +2494,9 @@ def atualizar_socios_usuario():
     db.session.commit()
 
 
+@app.route('/admin_panel')
+def admin_panel():
+    return render_template('admin_panel.html')
 
 
 
