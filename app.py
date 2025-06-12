@@ -22,6 +22,8 @@ import uuid
 import math
 from flask_compress import Compress
 from calendar import monthrange
+import threading
+
 
 
 
@@ -494,7 +496,14 @@ def lancamentos():
 
     return render_template('lancamentos.html', ano=ano_atual)
 
-
+def converter_pdf_em_background(file_path, image_path):
+    try:
+        images = convert_from_path(file_path)
+        if images:
+            images[0].save(image_path, 'JPEG')
+            os.remove(file_path)
+    except Exception as e:
+        print(f"Erro ao converter PDF: {e}")
 
 @app.route('/adicionar_lancamento/<int:mes>', methods=['GET', 'POST'])
 @login_required  # Garante que apenas usuários logados acessem essa rota
@@ -542,23 +551,18 @@ def adicionar_lancamento(mes):
 
                 # Se for PDF, converte para imagem
                 if new_filename.lower().endswith('.pdf'):
-                    from pdf2image import convert_from_path  # Certifique-se de importar isso
-                    images = convert_from_path(file_path)  # Converte todas as páginas do PDF para imagens
+                    image_filename = new_filename.replace('.pdf', '.jpg')
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+                
+                    thread = threading.Thread(target=converter_pdf_em_background, args=(file_path, image_path))
+                    thread.start()
+                
+                    comprovante = image_path
+                else:
+                    comprovante = file_path  # Atualiza a variável do comprovante
 
-                    if images:
-                        image_filename = new_filename.replace('.pdf', '.jpg')
-                        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-
-                        # Salva apenas a primeira página do PDF como imagem
-                        images[0].save(image_path, 'JPEG')
-                        os.remove(file_path)
-                        file_path = image_path
-
-                comprovante = file_path  # Atualiza a variável do comprovante
-
-        ultimo_id_lanc = db.session.query(func.max(Lancamento.id_lancamento))\
-            .filter_by(id_usuario=current_user.id).scalar()
-        proximo_id_lanc = (ultimo_id_lanc or 0) + 1
+        proximo_id_lanc = configuracao.ultimo_id_lancamento + 1
+        configuracao.ultimo_id_lancamento = proximo_id_lanc
 
         # Criando o objeto Lancamento e salvando no banco com o id_usuario do usuário logado
         lancamento = Lancamento(
@@ -1798,7 +1802,8 @@ def cadastro():
             tesoureiro_responsavel='Vazio',
             presidente_responsavel='Vazio',
             saldo_inicial=0.0,
-            email=email
+            email=email,
+            ultimo_id_lancamento=0
         )
         db.session.add(configuracao)
         db.session.commit()
