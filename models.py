@@ -21,6 +21,7 @@ class Configuracao(db.Model):
     presidente_responsavel = db.Column(db.String(100), nullable=False)
     saldo_inicial = db.Column(db.Float, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    ultimo_id_lancamento = db.Column(db.Integer, default=0)
 
 
 
