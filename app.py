@@ -444,14 +444,16 @@ def mes(mes, ano):
 
     # Buscar os lançamentos do mês para o usuário logado
     # Calcula o primeiro e o último dia do mês
-    data_inicio = date(ano, mes, 1)
-    ultimo_dia = monthrange(ano, mes)[1]
-    data_fim = date(ano, mes, ultimo_dia)
+    inicio_mes = datetime(ano, mes, 1)
+    if mes == 12:
+        fim_mes = datetime(ano+1, 1, 1)
+    else:
+        fim_mes = datetime(ano, mes+1, 1)
     
-    # Consulta no banco
     lancamentos = Lancamento.query.filter(
-        Lancamento.data.between(data_inicio, data_fim),
-        Lancamento.id_usuario == current_user.id
+        Lancamento.id_usuario == current_user.id,
+        Lancamento.data >= inicio_mes,
+        Lancamento.data < fim_mes
     ).all()
 
     # Calculando as entradas e saídas
@@ -469,9 +471,6 @@ def mes(mes, ano):
 
     # Garantir que o mês tenha dois dígitos
     mes_formatado = str(mes).zfill(2)
-
-    # Recalcular os saldos finais para garantir atualização correta
-    recalcular_saldos_finais()
 
     # Renderizando a página
     return render_template(
