@@ -23,6 +23,8 @@ import math
 from flask_compress import Compress
 from calendar import monthrange
 import threading
+from urllib.parse import quote_plus
+
 
 
 
@@ -30,7 +32,9 @@ import threading
 app = Flask(__name__)
 app.jinja_env.filters['formatar_moeda'] = formatar_moeda
 app.secret_key = 'chave_secreta_ump_financeiro'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:josa1972.@db.pzzmxelncjnmalpbksrq.supabase.co:5432/postgres?sslmode=require')
+senha = 'josa1972.'
+senha_codificada = quote_plus(senha)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'postgresql://postgres:{senha_codificada}@db.pzzmxelncjnmalpbksrq.supabase.co:5432/postgres?sslmode=require')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 Compress(app)
 
