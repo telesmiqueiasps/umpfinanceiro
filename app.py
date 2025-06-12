@@ -30,7 +30,7 @@ import threading
 app = Flask(__name__)
 app.jinja_env.filters['formatar_moeda'] = formatar_moeda
 app.secret_key = 'chave_secreta_ump_financeiro'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','postgresql://neondb_owner:npg_GP6isKJLXrz2@ep-shy-moon-a84r7q6b-pooler.eastus2.azure.neon.tech/neondb?sslmode=require')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:josa1972.@db.pzzmxelncjnmalpbksrq.supabase.co:5432/postgres?sslmode=require')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 Compress(app)
 
