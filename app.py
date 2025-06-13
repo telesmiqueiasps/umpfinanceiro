@@ -164,7 +164,7 @@ def base():
 @app.route('/')
 @login_required
 def index():
-    
+    db.session.expire_all()
     config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
     if not config:
