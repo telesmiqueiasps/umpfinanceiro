@@ -513,90 +513,90 @@ def converter_pdf_em_background(file_path, image_path):
 @app.route('/adicionar_lancamento/<int:mes>', methods=['GET', 'POST'])
 @login_required  # Garante que apenas usuários logados acessem essa rota
 def adicionar_lancamento(mes):
-    with app.app_context():
-        configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-        ano = configuracao.ano_vigente if configuracao else datetime.now().year  # Se não houver configuração, usa o ano atual
     
-        if request.method == 'POST':
-            data = request.form.get('data')
-            tipo = request.form.get('tipo')
-            descricao = request.form.get('descricao')
-            valor = request.form.get('valor')
-            comprovante = None
-    
-            if not data or not tipo or not descricao or not valor:
-                flash("Erro: Todos os campos devem ser preenchidos.", "danger")
-                return redirect(url_for('adicionar_lancamento', mes=mes))
-    
-            try:
-                data = datetime.strptime(data, '%Y-%m-%d').date()
-                valor = float(valor)
-            except ValueError:
-                flash("Erro: Data ou valor inválidos.", "danger")
-                return redirect(url_for('adicionar_lancamento', mes=mes))
-    
-            # Verificando o arquivo de comprovante e salvando no diretório apropriado
-            if 'comprovante' in request.files:
-                file = request.files['comprovante']
-    
-                if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-    
-                    ext = os.path.splitext(filename)[1]
-                    base_name = os.path.splitext(filename)[0]
-    
-                    while True:
-                        unique_id = uuid.uuid4().hex[:8]
-                        new_filename = f"{base_name}_{unique_id}{ext}"
-                        existing = Lancamento.query.filter_by(comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)).first()
-                        if not existing:
-                            break
-                            
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
-                    file.save(file_path)
-    
-                    # Se for PDF, converte para imagem
-                    if new_filename.lower().endswith('.pdf'):
-                        image_filename = new_filename.replace('.pdf', '.jpg')
-                        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-                    
-                        thread = threading.Thread(target=converter_pdf_em_background, args=(file_path, image_path))
-                        thread.start()
-                    
-                        comprovante = image_path
-                    else:
-                        comprovante = file_path  # Atualiza a variável do comprovante
-    
-            proximo_id_lanc = configuracao.ultimo_id_lancamento + 1
-            configuracao.ultimo_id_lancamento = proximo_id_lanc
-    
-            # Criando o objeto Lancamento e salvando no banco com o id_usuario do usuário logado
-            lancamento = Lancamento(
-                data=data,
-                tipo=tipo,
-                descricao=descricao,
-                valor=valor,
-                comprovante=comprovante,
-                id_usuario=current_user.id,
-                id_lancamento=proximo_id_lanc
-            )
-            db.session.add(lancamento)
-            db.session.commit()
-            db.session.flush()
-            db.session.close()
-    
-            # Calcular o saldo inicial com base no mês (já ajustado para o usuário logado)
-            saldo_inicial = obter_saldo_inicial(mes, ano)
-    
-            # Salvar o saldo final após o lançamento (já ajustado para o usuário logado)
-            salvar_saldo_final(mes, ano, saldo_inicial)
-    
-            # Recalcular todos os saldos finais (já ajustado para o usuário logado)
-            recalcular_saldos_finais()
-    
-            return redirect(url_for('mes', mes=data.month, ano=data.year))
-    
-        return render_template('adicionar_lancamento.html', mes=mes, ano_atual=ano)
+    configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    ano = configuracao.ano_vigente if configuracao else datetime.now().year  # Se não houver configuração, usa o ano atual
+
+    if request.method == 'POST':
+        data = request.form.get('data')
+        tipo = request.form.get('tipo')
+        descricao = request.form.get('descricao')
+        valor = request.form.get('valor')
+        comprovante = None
+
+        if not data or not tipo or not descricao or not valor:
+            flash("Erro: Todos os campos devem ser preenchidos.", "danger")
+            return redirect(url_for('adicionar_lancamento', mes=mes))
+
+        try:
+            data = datetime.strptime(data, '%Y-%m-%d').date()
+            valor = float(valor)
+        except ValueError:
+            flash("Erro: Data ou valor inválidos.", "danger")
+            return redirect(url_for('adicionar_lancamento', mes=mes))
+
+        # Verificando o arquivo de comprovante e salvando no diretório apropriado
+        if 'comprovante' in request.files:
+            file = request.files['comprovante']
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+
+                ext = os.path.splitext(filename)[1]
+                base_name = os.path.splitext(filename)[0]
+
+                while True:
+                    unique_id = uuid.uuid4().hex[:8]
+                    new_filename = f"{base_name}_{unique_id}{ext}"
+                    existing = Lancamento.query.filter_by(comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)).first()
+                    if not existing:
+                        break
+                        
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                file.save(file_path)
+
+                # Se for PDF, converte para imagem
+                if new_filename.lower().endswith('.pdf'):
+                    image_filename = new_filename.replace('.pdf', '.jpg')
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+                
+                    thread = threading.Thread(target=converter_pdf_em_background, args=(file_path, image_path))
+                    thread.start()
+                
+                    comprovante = image_path
+                else:
+                    comprovante = file_path  # Atualiza a variável do comprovante
+
+        proximo_id_lanc = configuracao.ultimo_id_lancamento + 1
+        configuracao.ultimo_id_lancamento = proximo_id_lanc
+
+        # Criando o objeto Lancamento e salvando no banco com o id_usuario do usuário logado
+        lancamento = Lancamento(
+            data=data,
+            tipo=tipo,
+            descricao=descricao,
+            valor=valor,
+            comprovante=comprovante,
+            id_usuario=current_user.id,
+            id_lancamento=proximo_id_lanc
+        )
+        db.session.add(lancamento)
+        db.session.commit()
+        db.session.flush()
+        db.session.close()
+
+        # Calcular o saldo inicial com base no mês (já ajustado para o usuário logado)
+        saldo_inicial = obter_saldo_inicial(mes, ano)
+
+        # Salvar o saldo final após o lançamento (já ajustado para o usuário logado)
+        salvar_saldo_final(mes, ano, saldo_inicial)
+
+        # Recalcular todos os saldos finais (já ajustado para o usuário logado)
+        recalcular_saldos_finais()
+
+        return redirect(url_for('mes', mes=data.month, ano=data.year))
+
+    return render_template('adicionar_lancamento.html', mes=mes, ano_atual=ano)
 
 
 
