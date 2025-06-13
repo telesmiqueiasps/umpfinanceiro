@@ -640,6 +640,8 @@ def serve_file(filename):
     uploads_folder = os.path.join(app.root_path, 'uploads')  # Caminho absoluto da pasta uploads
     return send_from_directory(uploads_folder, filename)
 
+import requests
+
 def excluir_arquivo_supabase(file_path):
     """
     Exclui o arquivo do Supabase Storage.
@@ -650,7 +652,7 @@ def excluir_arquivo_supabase(file_path):
     headers = {
         'Authorization': f'Bearer {SUPABASE_KEY}',
         'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
+        # 'Content-Type': 'application/json',  --> REMOVIDO
     }
 
     response = requests.delete(url, headers=headers)
@@ -661,6 +663,7 @@ def excluir_arquivo_supabase(file_path):
     else:
         print(f"Erro ao excluir arquivo do Supabase: {response.status_code} - {response.text}")
         return False
+
 
 @app.route('/excluir_lancamento/<int:id>', methods=['POST'])
 @login_required  # Garante que apenas usuários logados acessem essa rota
