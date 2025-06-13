@@ -578,8 +578,6 @@ def adicionar_lancamento(mes):
         )
         db.session.add(lancamento)
         db.session.commit()
-        db.session.flush()
-        db.session.close()
 
         # Calcular o saldo inicial com base no mês (já ajustado para o usuário logado)
         saldo_inicial = obter_saldo_inicial(mes, ano)
