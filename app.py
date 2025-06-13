@@ -48,9 +48,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"  # Quando não logado, irá redirecionar para a página de login
 
-@app.teardown_request
-def shutdown_session(exception=None):
-    db.session.remove()
 
 # Criação do banco de dados
 with app.app_context():
@@ -164,7 +161,6 @@ def base():
 @app.route('/')
 @login_required
 def index():
-    db.session.expire_all()
     config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
     if not config:
