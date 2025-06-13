@@ -640,6 +640,27 @@ def serve_file(filename):
     uploads_folder = os.path.join(app.root_path, 'uploads')  # Caminho absoluto da pasta uploads
     return send_from_directory(uploads_folder, filename)
 
+def excluir_arquivo_supabase(file_path):
+    """
+    Exclui o arquivo do Supabase Storage.
+    Exemplo de file_path: 'uploads/2/arquivo.png'
+    """
+    url = f"{SUPABASE_URL}/storage/v1/object/{file_path}"
+
+    headers = {
+        'Authorization': f'Bearer {SUPABASE_KEY}',
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+    }
+
+    response = requests.delete(url, headers=headers)
+
+    if response.status_code in [200, 204]:
+        print(f"Arquivo excluído do Supabase: {file_path}")
+        return True
+    else:
+        print(f"Erro ao excluir arquivo do Supabase: {response.status_code} - {response.text}")
+        return False
 
 @app.route('/excluir_lancamento/<int:id>', methods=['POST'])
 @login_required  # Garante que apenas usuários logados acessem essa rota
@@ -663,16 +684,14 @@ def excluir_lancamento(id):
         ).first()
 
         if lancamento:
-            # Exclui o comprovante do sistema de arquivos (se existir)
             if lancamento.comprovante:
-                comprovante_path = lancamento.comprovante
-                if os.path.exists(comprovante_path):
-                    os.remove(comprovante_path)
-                    print(f"Comprovante excluído: {comprovante_path}")
-                else:
-                    print(f"Arquivo não encontrado: {comprovante_path}")
+                try:
+                    # Pega só o path dentro do Storage
+                    path_inicio = lancamento.comprovante.split('/object/public/')[1]
+                    excluir_arquivo_supabase(path_inicio)
+                except Exception as e:
+                    print(f"Erro ao excluir comprovante do Supabase: {e}")
 
-            # Remove o lançamento
             db.session.delete(lancamento)
 
             # Agora atualizamos a configuração
