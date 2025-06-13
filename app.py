@@ -40,6 +40,8 @@ Compress(app)
 SUPABASE_URL = os.getenv('SUPABASE_URL')  # Deixe como variáveis de ambiente na Render
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 BUCKET_NAME = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
