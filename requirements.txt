@@ -140,3 +140,4 @@ zope.interface
 zopfli
 zstandard
 gunicorn
+supabase
