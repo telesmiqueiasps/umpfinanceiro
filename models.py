@@ -38,7 +38,7 @@ class Lancamento(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    id_lancamento = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    id_lancamento = db.Column(db.Integer, nullable=False)
     data = db.Column(db.Date, nullable=False)
     tipo = db.Column(db.String(50), nullable=False)
     descricao = db.Column(db.String(120), nullable=False)
