@@ -45,17 +45,17 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def upload_to_supabase(file_data, filename, content_type):
-    """
-    Recebe bytes, nome do arquivo e content_type e faz upload no Supabase.
-    """
+def upload_to_supabase(file_data, file_name, content_type):
+    unique_id = uuid.uuid4().hex
+    caminho_arquivo = f"{current_user.id}/{unique_id}_{file_name}"
+    
     supabase.storage.from_(BUCKET_NAME).upload(
-        path=filename,
-        file=file_data,
-        file_options={"content-type": content_type},
-        upsert=True  # sobrescreve se já existir
+        caminho_arquivo,
+        file_data,
+        { "content-type": content_type }
     )
-    url_publica = supabase.storage.from_(BUCKET_NAME).get_public_url(filename)
+    
+    url_publica = supabase.storage.from_(BUCKET_NAME).get_public_url(caminho_arquivo)
     return url_publica
 
 
