@@ -161,7 +161,7 @@ def base():
 @app.route('/')
 @login_required
 def index():
-    config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    config = db.session.execute(db.select(Configuracao).filter_by(id_usuario=current_user.id)).scalars().first()
 
     if not config:
         config = Configuracao(
