@@ -643,10 +643,10 @@ def excluir_lancamento(id):
 
     if not mes or not ano:
         flash('Erro: Mês ou ano não informado.', 'danger')
-        return redirect(url_for('mes', mes=1, ano=2025))  # Redireciona para um padrão se faltar dados
+        return redirect(url_for('mes', mes=1, ano=2025))
 
-    mes = int(mes)  # Converte para inteiro
-    ano = int(ano)  # Converte para inteiro
+    mes = int(mes)
+    ano = int(ano)
 
     with app.app_context():
         # Busca o lançamento apenas se pertencer ao usuário logado
@@ -656,28 +656,28 @@ def excluir_lancamento(id):
         ).first()
 
         if lancamento:
-            # Verifica se o lançamento tem um comprovante e tenta excluir o arquivo
+            # Exclui o comprovante do sistema de arquivos (se existir)
             if lancamento.comprovante:
                 comprovante_path = lancamento.comprovante
-
-                # Verifica se o arquivo existe antes de tentar excluir
                 if os.path.exists(comprovante_path):
                     os.remove(comprovante_path)
                     print(f"Comprovante excluído: {comprovante_path}")
                 else:
                     print(f"Arquivo não encontrado: {comprovante_path}")
 
-            # Remove o lançamento do banco de dados
+            # Remove o lançamento
             db.session.delete(lancamento)
+
+            # Agora atualizamos a configuração
+            configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+            if configuracao and configuracao.ultimo_id_lancamento > 0:
+                configuracao.ultimo_id_lancamento -= 1
+
             db.session.commit()
 
-            # Verifica o saldo inicial correto (já ajustado para o usuário logado)
+            # Recalcula saldos
             saldo_inicial = obter_saldo_inicial(mes, ano)
-
-            # Salvar o saldo final após a exclusão (já ajustado para o usuário logado)
             salvar_saldo_final(mes, ano, saldo_inicial)
-
-            # Recalcular todos os saldos finais após a exclusão (já ajustado para o usuário logado)
             recalcular_saldos_finais()
 
             flash('Lançamento e comprovante excluídos com sucesso!', 'success')
@@ -686,6 +686,7 @@ def excluir_lancamento(id):
             return redirect(url_for('mes', mes=mes, ano=ano))
 
     return redirect(url_for('mes', mes=mes, ano=ano))
+
 
 @app.route('/editar_lancamento/<int:id>', methods=['GET', 'POST'])
 @login_required  # Garante que apenas usuários logados acessem essa rota
