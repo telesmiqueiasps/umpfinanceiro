@@ -24,6 +24,7 @@ from flask_compress import Compress
 from calendar import monthrange
 import threading
 from urllib.parse import quote_plus
+from supabase import create_client
 
 
 
@@ -36,10 +37,25 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'postgresql:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 Compress(app)
 
-UPLOAD_FOLDER = 'uploads/'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+SUPABASE_URL = os.getenv('SUPABASE_URL')  # Deixe como variáveis de ambiente na Render
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+BUCKET_NAME = 'uploads'
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def upload_to_supabase(file_data, filename, content_type):
+    """
+    Recebe bytes, nome do arquivo e content_type e faz upload no Supabase.
+    """
+    supabase.storage.from_(BUCKET_NAME).upload(
+        path=filename,
+        file=file_data,
+        file_options={"content-type": content_type},
+        upsert=True  # sobrescreve se já existir
+    )
+    url_publica = supabase.storage.from_(BUCKET_NAME).get_public_url(filename)
+    return url_publica
+
 
 db.init_app(app)
 
@@ -531,37 +547,29 @@ def adicionar_lancamento(mes):
             flash("Erro: Data ou valor inválidos.", "danger")
             return redirect(url_for('adicionar_lancamento', mes=mes))
 
-        # Verificando o arquivo de comprovante e salvando no diretório apropriado
+        # Verificando o arquivo de comprovante e salvando no Supabase
         if 'comprovante' in request.files:
             file = request.files['comprovante']
-
+        
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-
                 ext = os.path.splitext(filename)[1]
                 base_name = os.path.splitext(filename)[0]
-
+        
                 while True:
                     unique_id = uuid.uuid4().hex[:8]
                     new_filename = f"{base_name}_{unique_id}{ext}"
-                    existing = Lancamento.query.filter_by(comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)).first()
-                    if not existing:
-                        break
-                        
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
-                file.save(file_path)
+                    break
 
                 # Se for PDF, converte para imagem
                 if new_filename.lower().endswith('.pdf'):
-                    image_filename = new_filename.replace('.pdf', '.jpg')
-                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-                
-                    thread = threading.Thread(target=converter_pdf_em_background, args=(file_path, image_path))
-                    thread.start()
-                
-                    comprovante = image_path
+                    image_bytes, image_content_type = converter_pdf_em_bytes(file)
+                    comprovante_url = upload_to_supabase(image_bytes, new_filename.replace('.pdf', '.jpg'), image_content_type)
+                    pass
                 else:
-                    comprovante = file_path  # Atualiza a variável do comprovante
+                    file_data = file.read()
+                    content_type = file.content_type
+                    comprovante_url = upload_to_supabase(file_data, new_filename, content_type)
 
         proximo_id_lanc = configuracao.ultimo_id_lancamento + 1
         configuracao.ultimo_id_lancamento = proximo_id_lanc
@@ -572,7 +580,7 @@ def adicionar_lancamento(mes):
             tipo=tipo,
             descricao=descricao,
             valor=valor,
-            comprovante=comprovante,
+            comprovante=comprovante_url,
             id_usuario=current_user.id,
             id_lancamento=proximo_id_lanc
         )
@@ -714,14 +722,6 @@ def editar_lancamento(id):
         lancamento.tipo = request.form['tipo']
         lancamento.descricao = request.form['descricao']
         lancamento.valor = float(request.form['valor'])  # Converte valor para float
-
-        # Verifica o comprovante e salva, se necessário
-        if 'comprovante' in request.files:
-            file = request.files['comprovante']
-            if file and allowed_file(file.filename):
-                filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-                file.save(filename)
-                lancamento.comprovante = filename
 
         db.session.commit()  # Salva as alterações no banco
 
@@ -1171,7 +1171,7 @@ def exportar_comprovantes():
     for lanc in lancamentos:
         if lanc.comprovante:
             # Construir o caminho completo do comprovante
-            comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], lanc.comprovante) if not lanc.comprovante.startswith('uploads/') else lanc.comprovante
+            comprovante_path = lanc.comprovante
 
             print(f"Comprovante Path: {comprovante_path}")  # Para debug
 
