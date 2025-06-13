@@ -81,8 +81,9 @@
                                 {{ lancamento.valor | formatar_moeda }}
                             </td>
                             <td class="py-3 px-4 text-sm">
-                                <a href="{{ url_for('serve_file', filename=lancamento.comprovante.split('/')[-1]) }}" 
-                                   class="text-blue-600 hover:text-blue-700 hover:underline transition-all duration-200" target="_blank">
+                                <a href="{{ lancamento.comprovante }}" 
+                                   class="text-blue-600 hover:text-blue-700 hover:underline transition-all duration-200" 
+                                   target="_blank">
                                     Ver Comprovante
                                 </a>
                             </td>
