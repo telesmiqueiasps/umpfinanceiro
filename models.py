@@ -43,7 +43,7 @@ class Lancamento(db.Model):
     tipo = db.Column(db.String(50), nullable=False)
     descricao = db.Column(db.String(120), nullable=False)
     valor = db.Column(db.Float, nullable=False)
-    comprovante = db.Column(db.String(120), nullable=True)
+    comprovante = db.Column(db.String(1000), nullable=True)
 
     def __repr__(self):
         return f'<Lancamento {self.id} - {self.descricao}>'
