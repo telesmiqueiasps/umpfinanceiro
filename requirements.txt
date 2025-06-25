@@ -11,4 +11,4 @@ requests
 gunicorn
 Flask-Sqlalchemy
 Supabase
-psycopg2
+psycopg2-binary
