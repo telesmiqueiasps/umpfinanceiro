@@ -37,27 +37,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'postgresql:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 Compress(app)
 
-SUPABASE_URL = os.getenv('SUPABASE_URL')  # Deixe como variáveis de ambiente na Render
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-BUCKET_NAME = 'uploads'
+UPLOAD_FOLDER = os.path.join('/mnt/data', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Garante que o diretório existe
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
-
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def upload_to_supabase(file_data, file_name, content_type):
-    unique_id = uuid.uuid4().hex
-    caminho_arquivo = f"{current_user.id}/{unique_id}_{file_name}"
-    
-    supabase.storage.from_(BUCKET_NAME).upload(
-        caminho_arquivo,
-        file_data,
-        { "content-type": content_type }
-    )
-    
-    url_publica = supabase.storage.from_(BUCKET_NAME).get_public_url(caminho_arquivo)
-    return url_publica
-
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 db.init_app(app)
 
