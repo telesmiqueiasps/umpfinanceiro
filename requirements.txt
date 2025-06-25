@@ -11,3 +11,4 @@ requests
 gunicorn
 Flask-Sqlalchemy
 Supabase
+psycopg2
