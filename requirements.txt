@@ -10,3 +10,4 @@ pdf2image
 requests
 gunicorn
 Flask-Sqlalchemy
+Supabase
