@@ -197,7 +197,7 @@ def index():
     aci_enviada_formatada = formatar_moeda(aci_enviada)
 
 
-    return render_template(
+    response = make_response(render_template(
         'index.html',
         config=config, 
         saldo_formatado=saldo_formatado,
@@ -210,7 +210,9 @@ def index():
         aci_enviada=aci_enviada_formatada,
         ano=config.ano_vigente,
         now=datetime.now()
-    )
+    ))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response
 
 
 
@@ -459,7 +461,7 @@ def mes(mes, ano):
         Lancamento.id_usuario == current_user.id,
         Lancamento.data >= inicio_mes,
         Lancamento.data < fim_mes
-    ).all()
+    ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
     # Calculando as entradas e saídas
     entradas = sum(l.valor for l in lancamentos if l.tipo in ['Outras Receitas', 'ACI Recebida'])
@@ -499,21 +501,13 @@ def lancamentos():
 
     return render_template('lancamentos.html', ano=ano_atual)
 
-def converter_pdf_em_background(file_path, image_path):
-    try:
-        images = convert_from_path(file_path)
-        if images:
-            images[0].save(image_path, 'JPEG')
-            os.remove(file_path)
-    except Exception as e:
-        print(f"Erro ao converter PDF: {e}")
+
 
 @app.route('/adicionar_lancamento/<int:mes>', methods=['GET', 'POST'])
-@login_required  # Garante que apenas usuários logados acessem essa rota
+@login_required 
 def adicionar_lancamento(mes):
-    
     configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-    ano = configuracao.ano_vigente if configuracao else datetime.now().year  # Se não houver configuração, usa o ano atual
+    ano = configuracao.ano_vigente if configuracao else datetime.now().year  
 
     if request.method == 'POST':
         data = request.form.get('data')
@@ -533,53 +527,66 @@ def adicionar_lancamento(mes):
             flash("Erro: Data ou valor inválidos.", "danger")
             return redirect(url_for('adicionar_lancamento', mes=mes))
 
-        # Verificando o arquivo de comprovante e salvando no Supabase
         if 'comprovante' in request.files:
             file = request.files['comprovante']
-        
+
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
+
                 ext = os.path.splitext(filename)[1]
                 base_name = os.path.splitext(filename)[0]
-        
+
                 while True:
                     unique_id = uuid.uuid4().hex[:8]
                     new_filename = f"{base_name}_{unique_id}{ext}"
-                    break
+                    existing = Lancamento.query.filter_by(comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)).first()
+                    if not existing:
+                        break
+                        
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                file.save(file_path)
 
-                # Se for PDF, converte para imagem
                 if new_filename.lower().endswith('.pdf'):
-                    image_bytes, image_content_type = converter_pdf_em_bytes(file)
-                    comprovante_url = upload_to_supabase(image_bytes, new_filename.replace('.pdf', '.jpg'), image_content_type)
-                    pass
-                else:
-                    file_data = file.read()
-                    content_type = file.content_type
-                    comprovante_url = upload_to_supabase(file_data, new_filename, content_type)
+                    from pdf2image import convert_from_path 
+                    images = convert_from_path(file_path)  
 
-        proximo_id_lanc = configuracao.ultimo_id_lancamento + 1
-        configuracao.ultimo_id_lancamento = proximo_id_lanc
+                    if images:
+                        image_filename = new_filename.replace('.pdf', '.jpg')
+                        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
 
-        # Criando o objeto Lancamento e salvando no banco com o id_usuario do usuário logado
+                        images[0].save(image_path, 'JPEG')
+                        os.remove(file_path)
+                        file_path = image_path
+
+                comprovante = file_path  
+
+        ultimo_id_lanc = db.session.query(func.max(Lancamento.id_lancamento))\
+            .filter_by(id_usuario=current_user.id).scalar()
+        proximo_id_lanc = (ultimo_id_lanc or 0) + 1
+
         lancamento = Lancamento(
             data=data,
             tipo=tipo,
             descricao=descricao,
             valor=valor,
-            comprovante=comprovante_url,
+            comprovante=comprovante,
             id_usuario=current_user.id,
             id_lancamento=proximo_id_lanc
         )
         db.session.add(lancamento)
         db.session.commit()
 
-        # Calcular o saldo inicial com base no mês (já ajustado para o usuário logado)
+        todos_lancamentos = Lancamento.query.filter_by(id_usuario=current_user.id).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
+
+        for index, lanc in enumerate(todos_lancamentos, start=1):
+            lanc.id_lancamento = index
+
+        db.session.commit()
+
         saldo_inicial = obter_saldo_inicial(mes, ano)
 
-        # Salvar o saldo final após o lançamento (já ajustado para o usuário logado)
         salvar_saldo_final(mes, ano, saldo_inicial)
 
-        # Recalcular todos os saldos finais (já ajustado para o usuário logado)
         recalcular_saldos_finais()
 
         return redirect(url_for('mes', mes=data.month, ano=data.year))
@@ -626,45 +633,20 @@ def serve_file(filename):
 
 import requests
 
-def excluir_arquivo_supabase(file_path):
-    """
-    Exclui o arquivo do Supabase Storage.
-    Exemplo de file_path: 'uploads/2/arquivo.png'
-    """
-    url = f"{SUPABASE_URL}/storage/v1/object/{file_path}"
-
-    headers = {
-        'Authorization': f'Bearer {SUPABASE_KEY}',
-        'apikey': SUPABASE_KEY,
-        # 'Content-Type': 'application/json',  --> REMOVIDO
-    }
-
-    response = requests.delete(url, headers=headers)
-
-    if response.status_code in [200, 204]:
-        print(f"Arquivo excluído do Supabase: {file_path}")
-        return True
-    else:
-        print(f"Erro ao excluir arquivo do Supabase: {response.status_code} - {response.text}")
-        return False
-
-
 @app.route('/excluir_lancamento/<int:id>', methods=['POST'])
-@login_required  # Garante que apenas usuários logados acessem essa rota
+@login_required  
 def excluir_lancamento(id):
-    # Obtendo 'mes' e 'ano' do formulário
     mes = request.form.get('mes')
     ano = request.form.get('ano')
 
     if not mes or not ano:
         flash('Erro: Mês ou ano não informado.', 'danger')
-        return redirect(url_for('mes', mes=1, ano=2025))
+        return redirect(url_for('mes', mes=1, ano=2025))  
 
-    mes = int(mes)
-    ano = int(ano)
+    mes = int(mes)  
+    ano = int(ano)  
 
     with app.app_context():
-        # Busca o lançamento apenas se pertencer ao usuário logado
         lancamento = Lancamento.query.filter_by(
             id=id,
             id_usuario=current_user.id
@@ -672,23 +654,25 @@ def excluir_lancamento(id):
 
         if lancamento:
             if lancamento.comprovante:
-                try:
-                    # Pega só o path dentro do Storage
-                    path_inicio = lancamento.comprovante.split('/object/public/')[1]
-                    excluir_arquivo_supabase(path_inicio)
-                except Exception as e:
-                    print(f"Erro ao excluir comprovante do Supabase: {e}")
+                comprovante_path = lancamento.comprovante
+
+                if os.path.exists(comprovante_path):
+                    os.remove(comprovante_path)
+                    print(f"Comprovante excluído: {comprovante_path}")
+                else:
+                    print(f"Arquivo não encontrado: {comprovante_path}")
 
             db.session.delete(lancamento)
+            db.session.commit()
 
-            # Agora atualizamos a configuração
-            configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-            if configuracao and configuracao.ultimo_id_lancamento > 0:
-                configuracao.ultimo_id_lancamento -= 1
+            # Reorganiza os códigos após exclusão
+            todos_lancamentos = Lancamento.query.filter_by(id_usuario=current_user.id).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
+
+            for index, lanc in enumerate(todos_lancamentos, start=1):
+                lanc.id_lancamento = index
 
             db.session.commit()
 
-            # Recalcula saldos
             saldo_inicial = obter_saldo_inicial(mes, ano)
             salvar_saldo_final(mes, ano, saldo_inicial)
             recalcular_saldos_finais()
@@ -816,7 +800,7 @@ def dados_relatorio(mes=None):
             extract('month', Lancamento.data) == mes_atual,
             extract('year', Lancamento.data) == ano_vigente,
             Lancamento.id_usuario == current_user.id
-        ).all()
+        ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
 
         dados.append({
@@ -848,7 +832,15 @@ def relatorio():
     dados = dados_relatorio(mes)  # Agora busca o ano automaticamente da configuração do usuário
     ano = dados[0]['ano_vigente'] if dados else datetime.now().year  # Obtém o ano vigente da configuração
 
-    return render_template('relatorio.html', config=config, dados=dados, ano=ano, mes=mes)
+    response = make_response(render_template(
+        'relatorio.html', 
+        config=config, 
+        dados=dados, 
+        ano=ano, 
+        mes=mes
+    ))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response
 
 @app.route('/relatorio/exportar')
 @login_required  # Garante que apenas usuários logados acessem essa rota
@@ -1087,7 +1079,7 @@ def exportar_relatorio():
             pdf.cell(35, 10, txt=lanc.tipo, border=1, align='C')
             pdf.cell(65, 10, txt=lanc.descricao, border=1, align='C')
             pdf.cell(35, 10, txt=f" {formatar_moeda(lanc.valor)}", border=1, align='C')
-            pdf.cell(20, 10, txt=str(lanc.id), border=1, align='C')
+            pdf.cell(20, 10, txt=str(lanc.id_lancamento), border=1, align='C')
             pdf.ln()
 
         pdf.ln(5)  # Espaço entre meses
@@ -1114,7 +1106,7 @@ def buscar_lancamentos(ano=None, mes=None):
     if mes:
         query = query.filter(extract('month', Lancamento.data) == mes)  # Filtra pelo mês
 
-    return query.all()  # Retorna os lançamentos filtrados
+    return query.order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()  # Retorna os lançamentos filtrados
 
 
 @app.route('/exportar-comprovantes')
@@ -1166,7 +1158,7 @@ def exportar_comprovantes():
     pdf.set_font("Arial", size=10)
 
     for lanc in lancamentos:
-        pdf.cell(15, 10, str(lanc.id), border=1, align='C')
+        pdf.cell(15, 10, str(lanc.id_lancamento), border=1, align='C')
         pdf.cell(30, 10, txt=lanc.data.strftime('%d/%m/%Y'), border=1, align='C')
         pdf.cell(80, 10, lanc.descricao, border=1, align='L')
         pdf.cell(30, 10, f"R$ {lanc.valor:.2f}", border=1, align='C')
@@ -1190,7 +1182,7 @@ def exportar_comprovantes():
                     try:
                         pdf.add_page()
                         pdf.set_font("Arial", style='B', size=12)
-                        pdf.cell(190, 10, f"Comprovante - Cód. {lanc.id}", ln=True, align='C')
+                        pdf.cell(190, 10, f"Comprovante - Cód. {lanc.id_lancamento}", ln=True, align='C')
                         pdf.ln(5)
 
                         # Carregar a imagem para obter as dimensões
@@ -1214,13 +1206,13 @@ def exportar_comprovantes():
                 else:
                     pdf.add_page()
                     pdf.set_font("Arial", style='B', size=12)
-                    pdf.cell(190, 10, f"Comprovante - ID {lanc.id} (Formato de arquivo não suportado)", ln=True, align='C')
+                    pdf.cell(190, 10, f"Comprovante - ID {lanc.id_lancamento} (Formato de arquivo não suportado)", ln=True, align='C')
                     pdf.ln(5)
                     pdf.cell(190, 10, f"Comprovante: {comprovante_path} - Não é imagem", ln=True, align='C')
             else:
                 pdf.add_page()
                 pdf.set_font("Arial", style='B', size=12)
-                pdf.cell(190, 10, f"Comprovante - ID {lanc.id} (Arquivo não encontrado)", ln=True, align='C')
+                pdf.cell(190, 10, f"Comprovante - ID {lanc.id_lancamento} (Arquivo não encontrado)", ln=True, align='C')
 
     # Salvar e enviar o PDF
     pdf_path = f"relatorios/comprovantes_{ano}_id_usuario_{current_user.id}.pdf"
