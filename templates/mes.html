@@ -74,7 +74,7 @@
                     <tbody>
                         {% for lancamento in lancamentos %}
                         <tr class="border-b hover:bg-gray-50 transition-all duration-200">
-                            <td class="py-3 px-4 text-sm text-gray-600">{{ lancamento.data }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600">{{ lancamento.data.strftime('%d-%m-%Y') }}</td>
                             <td class="py-3 px-4 text-sm text-gray-600">{{ lancamento.tipo }}</td>
                             <td class="py-3 px-4 text-sm text-gray-600">{{ lancamento.descricao }}</td>
                             <td class="py-3 px-4 text-sm {% if lancamento.tipo == 'Entrada' %} text-green-600 {% else %} text-red-600 {% endif %}">
