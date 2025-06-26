@@ -558,7 +558,7 @@ def adicionar_lancamento(mes):
                         os.remove(file_path)
                         file_path = image_path
 
-                comprovante = file_path  
+                comprovante = new_filename  
 
         ultimo_id_lanc = db.session.query(func.max(Lancamento.id_lancamento))\
             .filter_by(id_usuario=current_user.id).scalar()
