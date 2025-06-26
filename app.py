@@ -1189,7 +1189,7 @@ def exportar_comprovantes():
     for lanc in lancamentos:
         if lanc.comprovante:
             # Construir o caminho completo do comprovante
-            comprovante_path = lanc.comprovante
+            comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], lanc.comprovante) if not os.path.isabs(lanc.comprovante) else lanc.comprovante
 
             print(f"Comprovante Path: {comprovante_path}")  # Para debug
 
