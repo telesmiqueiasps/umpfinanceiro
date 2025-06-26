@@ -2511,7 +2511,43 @@ def atualizar_socios_usuario():
 def admin_panel():
     return render_template('admin_panel.html')
 
+@app.route('/arquivos/<pasta>')
+@login_required
+def listar_arquivos(pasta):
+    if pasta not in ['uploads', 'relatorios']:
+        flash("Pasta inválida!", "danger")
+        return redirect(url_for('index'))
 
+    pasta_path = os.path.join('/mnt/data', pasta)
+    arquivos = []
+
+    for nome in os.listdir(pasta_path):
+        caminho = os.path.join(pasta_path, nome)
+        if os.path.isfile(caminho):
+            arquivos.append({
+                'nome': nome,
+                'tamanho_kb': os.path.getsize(caminho) // 1024,
+                'data_modificacao': os.path.getmtime(caminho)
+            })
+
+    return render_template('arquivos.html', arquivos=arquivos, pasta=pasta)
+
+
+@app.route('/excluir_arquivo/<pasta>/<nome>')
+@login_required
+def excluir_arquivo(pasta, nome):
+    if pasta not in ['uploads', 'relatorios']:
+        flash("Pasta inválida!", "danger")
+        return redirect(url_for('index'))
+
+    caminho = os.path.join('/mnt/data', pasta, nome)
+    if os.path.exists(caminho):
+        os.remove(caminho)
+        flash(f"Arquivo '{nome}' excluído com sucesso!", "success")
+    else:
+        flash("Arquivo não encontrado!", "danger")
+
+    return redirect(url_for('listar_arquivos', pasta=pasta))
 
 
 if __name__ == "__main__":
