@@ -628,8 +628,8 @@ def visualizar_mes(mes, ano):
 
 @app.route('/uploads/<filename>')
 def serve_file(filename):
-    uploads_folder = os.path.join(app.root_path, 'uploads')  # Caminho absoluto da pasta uploads
-    return send_from_directory(uploads_folder, filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 import requests
 
