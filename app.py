@@ -628,7 +628,10 @@ def visualizar_mes(mes, ano):
 
 @app.route('/uploads/<filename>')
 def serve_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if not os.path.isfile(file_path):
+        abort(404)
+    return send_file(file_path)
 
 
 import requests
