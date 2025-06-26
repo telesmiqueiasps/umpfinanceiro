@@ -660,13 +660,14 @@ def excluir_lancamento(id):
 
         if lancamento:
             if lancamento.comprovante:
-                comprovante_path = lancamento.comprovante
-
+                comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(lancamento.comprovante))
+            
                 if os.path.exists(comprovante_path):
                     os.remove(comprovante_path)
                     print(f"Comprovante excluído: {comprovante_path}")
                 else:
                     print(f"Arquivo não encontrado: {comprovante_path}")
+
 
             db.session.delete(lancamento)
             db.session.commit()
