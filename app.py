@@ -43,6 +43,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Garante que o diretório existe
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+RELATORIOS_FOLDER = os.path.join('/mnt/data', 'relatorios')
+os.makedirs(RELATORIOS_FOLDER, exist_ok=True)  # Garante que a pasta exista
+
+app.config['RELATORIOS_FOLDER'] = RELATORIOS_FOLDER
+
+
 db.init_app(app)
 
 # Configuração do Flask-Login
@@ -54,6 +60,11 @@ login_manager.login_view = "login"  # Quando não logado, irá redirecionar para
 # Criação do banco de dados
 with app.app_context():
     db.create_all()
+
+@app.route('/relatorios/<filename>')
+def serve_relatorio(filename):
+    return send_from_directory(app.config['RELATORIOS_FOLDER'], filename)
+
 
 @app.after_request
 def add_header(response):
@@ -1093,7 +1104,7 @@ def exportar_relatorio():
 
     # Geração e envio do arquivo PDF
     pdf_file = f"relatorio_{ano}_id_usuario_{current_user.id}.pdf"
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')  # Caminho para a pasta 'relatorios' no diretório raiz
+    relatorios_dir = app.config['RELATORIOS_FOLDER']  # Caminho para a pasta 'relatorios' no diretório raiz
     os.makedirs(relatorios_dir, exist_ok=True)  # Cria a pasta 'relatorios' se não existir
     pdf_path = os.path.join(relatorios_dir, pdf_file)  # Caminho completo do arquivo
     pdf.output(pdf_path)  # Salva o PDF na pasta 'relatorios'
@@ -1221,9 +1232,19 @@ def exportar_comprovantes():
                 pdf.set_font("Arial", style='B', size=12)
                 pdf.cell(190, 10, f"Comprovante - ID {lanc.id_lancamento} (Arquivo não encontrado)", ln=True, align='C')
 
-    # Salvar e enviar o PDF
-    pdf_path = f"relatorios/comprovantes_{ano}_id_usuario_{current_user.id}.pdf"
+    # Define o nome do arquivo
+    pdf_file = f"comprovantes_{ano}_id_usuario_{current_user.id}.pdf"
+    
+    # Usa a pasta persistente configurada
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
+    os.makedirs(relatorios_dir, exist_ok=True)
+    
+    # Caminho completo do PDF
+    pdf_path = os.path.join(relatorios_dir, pdf_file)
+    
+    # Salva o PDF
     pdf.output(pdf_path)
+
 
     return send_file(pdf_path, as_attachment=True)
 
@@ -1240,7 +1261,7 @@ def consultar():
 @app.route('/buscar_relatorio', methods=['GET', 'POST'])
 @login_required
 def buscar_relatorio():
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')  # Caminho para a pasta relatorios
+    relatorios_dir = app.config['RELATORIOS_FOLDER']  # Caminho para a pasta relatorios
     relatorio_encontrado = None
 
     if request.method == 'POST':
@@ -1268,7 +1289,7 @@ def buscar_relatorio():
 @app.route('/visualizar_relatorio/<filename>')
 @login_required
 def visualizar_relatorio(filename):
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
     relatorio_path = os.path.join(relatorios_dir, filename)
 
     # Verifica se o arquivo pertence ao usuário logado
@@ -1285,7 +1306,7 @@ def visualizar_relatorio(filename):
 @app.route('/buscar_comprovantes', methods=['GET', 'POST'])
 @login_required
 def buscar_comprovantes():
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')  # Caminho para a pasta relatorios
+    relatorios_dir = app.config['RELATORIOS_FOLDER']  # Caminho para a pasta relatorios
     relatorio_encontrado = None
 
     if request.method == 'POST':
@@ -1313,7 +1334,7 @@ def buscar_comprovantes():
 @app.route('/visualizar_comprovantes/<filename>')
 @login_required
 def visualizar_comprovantes(filename):
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
     relatorio_path = os.path.join(relatorios_dir, filename)
 
     # Verifica se o arquivo pertence ao usuário logado
@@ -1422,7 +1443,7 @@ def admin_buscar_relatorio():
         return redirect(url_for("admin_consultar"))
 
     # Diretório onde os relatórios estão armazenados
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
     relatorio_encontrado = None
     usuario_selecionado = None  
 
@@ -1495,7 +1516,7 @@ def admin_visualizar_relatorio(filename):
         flash("Acesso negado.", "danger")
         return redirect(url_for('consultar'))
 
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
     relatorio_path = os.path.join(relatorios_dir, filename)
 
     # Pega o ID do usuário dentro do nome do arquivo
@@ -1547,7 +1568,7 @@ def admin_buscar_comprovantes():
         return redirect(url_for("admin_consultar"))
 
     # Diretório onde os relatórios estão armazenados
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
     relatorio_encontrado = None
     usuario_selecionado = None  
 
@@ -1620,7 +1641,7 @@ def admin_visualizar_comprovantes(filename):
         flash("Acesso negado.", "danger")
         return redirect(url_for('consultar'))
 
-    relatorios_dir = os.path.join(os.path.dirname(__file__), 'relatorios')
+    relatorios_dir = app.config['RELATORIOS_FOLDER']
     relatorio_path = os.path.join(relatorios_dir, filename)
 
     # Pega o ID do usuário dentro do nome do arquivo
