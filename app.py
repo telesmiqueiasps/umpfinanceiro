@@ -748,6 +748,12 @@ def editar_lancamento(id):
 
         db.session.commit()  # Salva as alterações no banco
 
+        todos_lancamentos = Lancamento.query.filter_by(id_usuario=current_user.id).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
+
+        for index, lanc in enumerate(todos_lancamentos, start=1):
+            lanc.id_lancamento = index
+
+        db.session.commit()
         # Após editar o lançamento, recalcular os saldos
         mes = int(mes)  # Converte para inteiro
         ano = int(ano)  # Converte para inteiro
