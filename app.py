@@ -548,14 +548,17 @@ def adicionar_lancamento(mes):
 
                 if new_filename.lower().endswith('.pdf'):
                     from pdf2image import convert_from_path 
-                    images = convert_from_path(file_path)  
-
+                    images = convert_from_path(file_path)
+                
                     if images:
                         image_filename = new_filename.replace('.pdf', '.jpg')
                         image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-
+                
                         images[0].save(image_path, 'JPEG')
                         os.remove(file_path)
+                
+                        # Atualiza o nome para salvar corretamente no banco
+                        new_filename = image_filename
                         file_path = image_path
 
                 comprovante = new_filename  
