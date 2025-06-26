@@ -512,6 +512,13 @@ def lancamentos():
 
     return render_template('lancamentos.html', ano=ano_atual)
 
+def reprocessar_png_para_nao_interlaced(path_original):
+    try:
+        with Image.open(path_original) as img:
+            img = img.convert("RGB")  # Garante compatibilidade
+            img.save(path_original, format="PNG", interlace=0)
+    except Exception as e:
+        print(f"Erro ao reprocessar PNG: {e}")
 
 
 @app.route('/adicionar_lancamento/<int:mes>', methods=['GET', 'POST'])
@@ -540,38 +547,44 @@ def adicionar_lancamento(mes):
 
         if 'comprovante' in request.files:
             file = request.files['comprovante']
-
+        
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-
-                ext = os.path.splitext(filename)[1]
+        
+                ext = os.path.splitext(filename)[1].lower()
                 base_name = os.path.splitext(filename)[0]
-
+        
                 while True:
                     unique_id = uuid.uuid4().hex[:8]
                     new_filename = f"{base_name}_{unique_id}{ext}"
-                    existing = Lancamento.query.filter_by(comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)).first()
+                    existing = Lancamento.query.filter_by(
+                        comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                    ).first()
                     if not existing:
                         break
-                        
+        
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
                 file.save(file_path)
-
-                if new_filename.lower().endswith('.pdf'):
-                    from pdf2image import convert_from_path 
+        
+                # Reprocessa PNGs para evitar erro de entrelaçamento no FPDF
+                if ext == '.png':
+                    reprocessar_png_para_nao_interlaced(file_path)
+        
+                # Converte PDF para JPG (mantendo seu comportamento atual)
+                if ext == '.pdf':
+                    from pdf2image import convert_from_path
                     images = convert_from_path(file_path)
-                
+        
                     if images:
                         image_filename = new_filename.replace('.pdf', '.jpg')
                         image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-                
+        
                         images[0].save(image_path, 'JPEG')
                         os.remove(file_path)
-                
-                        # Atualiza o nome para salvar corretamente no banco
+        
                         new_filename = image_filename
                         file_path = image_path
-
+        
                 comprovante = new_filename  
 
         ultimo_id_lanc = db.session.query(func.max(Lancamento.id_lancamento))\
