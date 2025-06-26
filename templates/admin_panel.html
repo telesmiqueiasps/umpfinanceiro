@@ -5,17 +5,32 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-100" style="background-color: #E6ECEF;">
-    <div class="text-center">
-        <h1 class="text-5xl font-bold text-blue-600 mb-4 animate-pulse">
-            🚧 Em Desenvolvimento 🚧
-        </h1>
-        <p class="text-lg text-gray-700 mb-6">
-            Esta página está sendo construída. Em breve estará disponível.
-        </p>
-        <a href="{{ url_for('index') }}" class="inline-flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
-            Voltar para Início
-        </a>
+<div class="min-h-screen bg-gray-100 p-10">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
+        <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center">Painel Administrativo</h1>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <a href="{{ url_for('listar_arquivos', pasta='uploads') }}" 
+               class="block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg shadow text-center transition duration-200">
+                📁 Gerenciar Comprovantes
+            </a>
+
+            <a href="{{ url_for('listar_arquivos', pasta='relatorios') }}" 
+               class="block bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg shadow text-center transition duration-200">
+                📂 Gerenciar Relatórios
+            </a>
+
+            <a href="{{ url_for('index') }}" 
+               class="block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg shadow text-center transition duration-200">
+                📊 Página Inicial
+            </a>
+
+            <a href="{{ url_for('mes', mes=1, ano=2025) }}" 
+               class="block bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-4 px-6 rounded-lg shadow text-center transition duration-200">
+                🧾 Lançamentos do Mês
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
+
