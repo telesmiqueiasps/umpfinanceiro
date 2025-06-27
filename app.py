@@ -270,7 +270,7 @@ def configuracoes():
         db.session.commit()
 
         # Recalcula os saldos finais
-        recalcular_saldos_finais()
+        recalcular_saldos_em_cadeia()
 
         flash('Configurações salvas com sucesso!', 'success')
         return redirect(url_for('configuracoes'))  # Redireciona para evitar reenvio do formulário
@@ -343,105 +343,45 @@ def calcular_saldo_final(mes, ano, saldo_inicial):
 
 
 
-# Salvar saldo final do mês
-def salvar_saldo_final(mes, ano, saldo_inicial):
-    # Calcular o saldo final (já ajustado para filtrar por id_usuario)
-    saldo_final = calcular_saldo_final(mes, ano, saldo_inicial)
+def recalcular_saldos_em_cadeia():
+    configuracao = db.session.query(Configuracao).filter_by(id_usuario=current_user.id).first()
+    saldo_atual = configuracao.saldo_inicial if configuracao else 0
 
-    # Verificando se já existe um saldo para o mês e usuário
-    saldo_existente = db.session.query(SaldoFinal).filter(
-        SaldoFinal.mes == mes,
-        SaldoFinal.ano == ano,
-        SaldoFinal.id_usuario == current_user.id  # Filtro pelo usuário logado
-    ).first()
-
-    if saldo_existente:
-        # Atualizando o saldo final se já existir
-        saldo_existente.saldo = saldo_final
-    else:
-        # Criando um novo registro caso não exista
-        saldo_novo = SaldoFinal(
+    for mes in range(1, 13):
+        lancamentos = Lancamento.query.filter_by(
             mes=mes,
-            ano=ano,
-            saldo=saldo_final,
-            id_usuario=current_user.id  # Associar ao usuário logado
-        )
-        db.session.add(saldo_novo)
+            ano=2025,
+            id_usuario=current_user.id
+        ).all()
 
-    # Comitar as alterações no banco de dados
-    db.session.commit()
-
-
-
-def atualizar_saldos_iniciais():
-    # Obter o saldo inicial da tabela de configurações para o usuário logado
-    saldo_inicial = db.session.query(Configuracao.saldo_inicial).filter_by(id_usuario=current_user.id).first()
-    if saldo_inicial:
-        saldo_inicial = saldo_inicial[0]
-    else:
-        saldo_inicial = 0  # Caso não haja saldo configurado, considerar 0
-
-    # Atualizar o saldo inicial de todos os meses para o usuário logado
-    for mes in range(1, 13):  # Para todos os meses de janeiro a dezembro
-        # Verificar se já existe um saldo inicial para o mês e usuário
-        saldo_existente = db.session.query(SaldoFinal).filter(
-            SaldoFinal.mes == mes,
-            SaldoFinal.id_usuario == current_user.id
-        ).first()
-
-        if saldo_existente:
-            # Atualizar o saldo inicial
-            saldo_existente.saldo = saldo_inicial
+        if lancamentos:
+            entradas = sum(l.valor for l in lancamentos if l.tipo in ['ACI recebida', 'Outras receitas'])
+            saidas = sum(l.valor for l in lancamentos if l.tipo in ['ACI enviada', 'Outras despesas'])
+            saldo_final = saldo_atual + entradas - saidas
         else:
-            # Criar um novo registro com o saldo inicial configurado
-            saldo_novo = SaldoFinal(
-                mes=mes,
-                ano=2025,  # Defina o ano conforme necessário
-                saldo=saldo_inicial,
-                id_usuario=current_user.id  # Associar ao usuário logado
-            )
-            db.session.add(saldo_novo)
+            saldo_final = saldo_atual  # Repete o saldo anterior
 
-    # Comitar as alterações no banco de dados
-    db.session.commit()
-
-
-
-def recalcular_saldos_finais():
-    # Obter todos os meses e anos disponíveis para os saldos do usuário logado
-    meses_anos = db.session.query(SaldoFinal.mes, SaldoFinal.ano).filter(
-        SaldoFinal.id_usuario == current_user.id
-    ).distinct().all()
-
-    for mes, ano in meses_anos:
-        # Obter o saldo inicial para o mês (já ajustado para o usuário logado)
-        saldo_inicial = obter_saldo_inicial(mes, ano)
-
-        # Calcular o saldo final para o mês (já ajustado para o usuário logado)
-        saldo_final = calcular_saldo_final(mes, ano, saldo_inicial)
-
-        # Verificar se já existe um saldo final para esse mês e usuário
-        saldo_existente = db.session.query(SaldoFinal).filter(
-            SaldoFinal.mes == mes,
-            SaldoFinal.ano == ano,
-            SaldoFinal.id_usuario == current_user.id
+        saldo_existente = db.session.query(SaldoFinal).filter_by(
+            mes=mes,
+            ano=2025,
+            id_usuario=current_user.id
         ).first()
 
         if saldo_existente:
-            # Atualizar o saldo final existente
             saldo_existente.saldo = saldo_final
         else:
-            # Criar um novo registro para o mês
-            saldo_novo = SaldoFinal(
+            novo = SaldoFinal(
                 mes=mes,
-                ano=ano,
+                ano=2025,
                 saldo=saldo_final,
-                id_usuario=current_user.id  # Associar ao usuário logado
+                id_usuario=current_user.id
             )
-            db.session.add(saldo_novo)
+            db.session.add(novo)
 
-    # Comitar as alterações no banco de dados
+        saldo_atual = saldo_final
+
     db.session.commit()
+
 
 
 @app.route('/mes/<int:mes>/<int:ano>')
@@ -610,11 +550,7 @@ def adicionar_lancamento(mes):
 
         db.session.commit()
 
-        saldo_inicial = obter_saldo_inicial(mes, ano)
-
-        salvar_saldo_final(mes, ano, saldo_inicial)
-
-        recalcular_saldos_finais()
+        recalcular_saldos_em_cadeia()
 
         return redirect(url_for('mes', mes=data.month, ano=data.year))
 
@@ -704,9 +640,7 @@ def excluir_lancamento(id):
 
             db.session.commit()
 
-            saldo_inicial = obter_saldo_inicial(mes, ano)
-            salvar_saldo_final(mes, ano, saldo_inicial)
-            recalcular_saldos_finais()
+            recalcular_saldos_em_cadeia()
 
             flash('Lançamento e comprovante excluídos com sucesso!', 'success')
         else:
@@ -758,8 +692,7 @@ def editar_lancamento(id):
         mes = int(mes)  # Converte para inteiro
         ano = int(ano)  # Converte para inteiro
 
-        # Recalcula os saldos finais após a edição (já ajustado para o usuário logado)
-        recalcular_saldos_finais()
+        recalcular_saldos_em_cadeia()
 
         flash("Lançamento atualizado com sucesso!", "success")
         # Redireciona para a página do mês, passando 'mes' e 'ano' como parâmetros
@@ -1720,7 +1653,7 @@ def excluir_todos_lancamentos():
                 salvar_saldo_final(mes, ano_vigente, saldo_inicial)
 
             # Recalcula os saldos finais novamente para garantir que tudo esteja atualizado
-            recalcular_saldos_finais()
+            recalcular_saldos_em_cadeia()
 
             flash('Todos os lançamentos e comprovantes foram excluídos com sucesso!', 'success')
 
