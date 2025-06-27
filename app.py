@@ -348,10 +348,10 @@ def recalcular_saldos_em_cadeia():
     saldo_atual = configuracao.saldo_inicial if configuracao else 0
 
     for mes in range(1, 13):
-        lancamentos = Lancamento.query.filter_by(
-            mes=mes,
-            ano=2025,
-            id_usuario=current_user.id
+        lancamentos = Lancamento.query.filter(
+            Lancamento.id_usuario == current_user.id,
+            extract('month', Lancamento.data) == mes,
+            extract('year', Lancamento.data) == 2025
         ).all()
 
         if lancamentos:
@@ -381,6 +381,7 @@ def recalcular_saldos_em_cadeia():
         saldo_atual = saldo_final
 
     db.session.commit()
+
 
 
 
