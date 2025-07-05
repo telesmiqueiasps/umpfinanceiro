@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Validação de Relatório - UMP Financeiro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .caixa {
+            max-width: 650px;
+            margin: auto;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .logo {
+            width: 120px;
+            margin-bottom: 15px;
+        }
+        .titulo {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #006699;
+        }
+        .valido {
+            color: green;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .invalido {
+            color: red;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-top: 20px;
+        }
+        li {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="caixa">
+        <img src="{{ url_for('static', filename='Logos/logo_sinodal 01.png') }}" alt="Logo UMP" class="logo">
+        <div class="titulo">UMP Financeiro</div>
+
+        {% if valida %}
+            <div class="valido">Relatório autenticado com sucesso!</div>
+            <p><strong>Assinado por:</strong></p>
+            <ul>
+                <li><strong>Tesoureiro:</strong> {{ config.tesoureiro_responsavel }}</li>
+                <li><strong>Presidente:</strong> {{ config.presidente_responsavel }}</li>
+                <li><strong>Organização:</strong> {{ config.ump_federacao }} - {{ config.federacao_sinodo }}</li>
+                <li><strong>Ano:</strong> {{ assinatura.ano }}</li>
+                <li><strong>Data da Assinatura:</strong> {{ assinatura.data_assinatura.strftime('%d/%m/%Y %H:%M:%S') }}</li>
+                <li><strong>Código de Validação:</strong> {{ assinatura.hash }}</li>
+            </ul>
+        {% else %}
+            <div class="invalido">Assinatura inválida ou não encontrada.</div>
+            <p>Documento pode ter sido alterado.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
