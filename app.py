@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory, render_template, g, request, redirect, url_for, flash, send_file, make_response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
-from models import db, Configuracao, Financeiro, Lancamento, SaldoFinal, Usuario, Socio, Mensalidade, AciValorAno, AciPagamento, SuporteMensagem
+from models import db, Configuracao, Financeiro, Lancamento, SaldoFinal, Usuario, Socio, Mensalidade, AciValorAno, AciPagamento, SuporteMensagem, AssinaturaRelatorio
 from datetime import datetime
 import os, sqlite3, locale
 from io import BytesIO
@@ -25,6 +25,7 @@ from calendar import monthrange
 import threading
 from urllib.parse import quote_plus
 from supabase import create_client
+from hashlib import sha256
 
 
 
@@ -270,7 +271,7 @@ def configuracoes():
         db.session.commit()
 
         # Recalcula os saldos finais
-        recalcular_saldos_em_cadeia()
+        recalcular_saldos_finais()
 
         flash('Configurações salvas com sucesso!', 'success')
         return redirect(url_for('configuracoes'))  # Redireciona para evitar reenvio do formulário
@@ -291,94 +292,128 @@ def verificar_email_existente(email, id_usuario):
 
 
 
-# Função para obter o saldo inicial do mês
 def obter_saldo_inicial(mes, ano):
-    # Obtém o ano vigente da tabela 'configuracoes' para o usuário logado
     ano_vigente = db.session.query(Configuracao.ano_vigente).filter_by(id_usuario=current_user.id).scalar()
 
     if not ano_vigente:
-        return 0  # Se não houver configuração, assume saldo 0
+        return 0  
 
-    # Usa o ano passado na função apenas se for o mesmo do ano vigente
     if ano != ano_vigente:
-        ano = ano_vigente  # Sempre usar o ano vigente salvo no banco
+        ano = ano_vigente  
 
-    # Para o mês de janeiro, o saldo inicial será o valor da coluna 'saldo_inicial' na tabela 'configuracoes'
     if mes == 1:
         saldo_inicial = db.session.query(Configuracao.saldo_inicial).filter_by(id_usuario=current_user.id).scalar()
-        return saldo_inicial if saldo_inicial is not None else 0  # Retorna 0 caso não tenha saldo inicial definido
+        return saldo_inicial if saldo_inicial is not None else 0  
 
-    # Para os outros meses, o saldo inicial será o saldo final do mês anterior
     saldo_anterior = db.session.query(SaldoFinal.saldo).filter_by(
         mes=mes - 1,
-        ano=ano,  # Usa o ano vigente da tabela 'configuracoes'
+        ano=ano,  
         id_usuario=current_user.id
     ).scalar()
 
-    return saldo_anterior if saldo_anterior is not None else 0  # Retorna 0 caso não tenha saldo do mês anterior
+    return saldo_anterior if saldo_anterior is not None else 0 
 
 
 
-# Função para calcular o saldo final do mês
+
 def calcular_saldo_final(mes, ano, saldo_inicial):
-    # Buscar lançamentos de entradas (Outras Receitas + ACI Recebida)
     entradas = db.session.query(db.func.sum(Lancamento.valor)).filter(
         (Lancamento.tipo == 'Outras Receitas') | (Lancamento.tipo == 'ACI Recebida'),
         db.extract('month', Lancamento.data) == mes,
         db.extract('year', Lancamento.data) == ano,
-        Lancamento.id_usuario == current_user.id  # Filtro pelo usuário logado
+        Lancamento.id_usuario == current_user.id 
     ).scalar() or 0
 
-    # Buscar lançamentos de saídas (Outras Despesas + ACI Enviada)
     saidas = db.session.query(db.func.sum(Lancamento.valor)).filter(
         (Lancamento.tipo == 'Outras Despesas') | (Lancamento.tipo == 'ACI Enviada'),
         db.extract('month', Lancamento.data) == mes,
         db.extract('year', Lancamento.data) == ano,
-        Lancamento.id_usuario == current_user.id  # Filtro pelo usuário logado
+        Lancamento.id_usuario == current_user.id  
     ).scalar() or 0
 
-    # Calculando o saldo final com base no saldo inicial
     saldo_final = saldo_inicial + entradas - saidas
     return saldo_final
 
 
 
-def recalcular_saldos_em_cadeia():
-    configuracao = db.session.query(Configuracao).filter_by(id_usuario=current_user.id).first()
-    saldo_atual = configuracao.saldo_inicial if configuracao else 0
+def salvar_saldo_final(mes, ano, saldo_inicial):
+    saldo_final = calcular_saldo_final(mes, ano, saldo_inicial)
 
-    for mes in range(1, 13):
-        lancamentos = Lancamento.query.filter(
-            Lancamento.id_usuario == current_user.id,
-            extract('month', Lancamento.data) == mes,
-            extract('year', Lancamento.data) == 2025
-        ).all()
+    saldo_existente = db.session.query(SaldoFinal).filter(
+        SaldoFinal.mes == mes,
+        SaldoFinal.ano == ano,
+        SaldoFinal.id_usuario == current_user.id 
+    ).first()
 
-        if lancamentos:
-            entradas = sum(l.valor for l in lancamentos if l.tipo in ['ACI recebida', 'Outras receitas'])
-            saidas = sum(l.valor for l in lancamentos if l.tipo in ['ACI enviada', 'Outras despesas'])
-            saldo_final = saldo_atual + entradas - saidas
-        else:
-            saldo_final = saldo_atual  # Repete o saldo anterior
-
-        saldo_existente = db.session.query(SaldoFinal).filter_by(
+    if saldo_existente:
+        saldo_existente.saldo = saldo_final
+    else:
+        saldo_novo = SaldoFinal(
             mes=mes,
-            ano=2025,
-            id_usuario=current_user.id
+            ano=ano,
+            saldo=saldo_final,
+            id_usuario=current_user.id  
+        )
+        db.session.add(saldo_novo)
+
+    db.session.commit()
+
+
+
+def atualizar_saldos_iniciais():
+    saldo_inicial = db.session.query(Configuracao.saldo_inicial).filter_by(id_usuario=current_user.id).first()
+    if saldo_inicial:
+        saldo_inicial = saldo_inicial[0]
+    else:
+        saldo_inicial = 0  
+
+    for mes in range(1, 13):  
+        saldo_existente = db.session.query(SaldoFinal).filter(
+            SaldoFinal.mes == mes,
+            SaldoFinal.id_usuario == current_user.id
+        ).first()
+
+        if saldo_existente:
+            saldo_existente.saldo = saldo_inicial
+        else:
+            saldo_novo = SaldoFinal(
+                mes=mes,
+                ano=2025,  
+                saldo=saldo_inicial,
+                id_usuario=current_user.id  
+            )
+            db.session.add(saldo_novo)
+
+    db.session.commit()
+
+
+
+def recalcular_saldos_finais():
+    meses_anos = db.session.query(SaldoFinal.mes, SaldoFinal.ano).filter(
+        SaldoFinal.id_usuario == current_user.id
+    ).distinct().all()
+
+    for mes, ano in meses_anos:
+        saldo_inicial = obter_saldo_inicial(mes, ano)
+
+        saldo_final = calcular_saldo_final(mes, ano, saldo_inicial)
+
+        saldo_existente = db.session.query(SaldoFinal).filter(
+            SaldoFinal.mes == mes,
+            SaldoFinal.ano == ano,
+            SaldoFinal.id_usuario == current_user.id
         ).first()
 
         if saldo_existente:
             saldo_existente.saldo = saldo_final
         else:
-            novo = SaldoFinal(
+            saldo_novo = SaldoFinal(
                 mes=mes,
-                ano=2025,
+                ano=ano,
                 saldo=saldo_final,
-                id_usuario=current_user.id
+                id_usuario=current_user.id  
             )
-            db.session.add(novo)
-
-        saldo_atual = saldo_final
+            db.session.add(saldo_novo)
 
     db.session.commit()
 
@@ -386,53 +421,37 @@ def recalcular_saldos_em_cadeia():
 
 
 @app.route('/mes/<int:mes>/<int:ano>')
-@login_required  # Garante que apenas usuários logados acessem essa rota
+@login_required  
 def mes(mes, ano):  
 
-    # Obtém a configuração do usuário logado
     configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
-    # Usa o ano vigente salvo na configuração, ou o ano atual caso não exista configuração
     ano_vigente = configuracao.ano_vigente if configuracao else datetime.now().year  
 
-    # Garante que a lógica sempre use o ano vigente salvo
     ano = ano_vigente  
 
-    # Obter o saldo inicial corretamente (considerando o ano vigente)
     saldo_inicial = obter_saldo_inicial(mes, ano)
 
-    # Buscar os lançamentos do mês para o usuário logado
-    # Calcula o primeiro e o último dia do mês
-    inicio_mes = datetime(ano, mes, 1)
-    if mes == 12:
-        fim_mes = datetime(ano+1, 1, 1)
-    else:
-        fim_mes = datetime(ano, mes+1, 1)
-    
     lancamentos = Lancamento.query.filter(
-        Lancamento.id_usuario == current_user.id,
-        Lancamento.data >= inicio_mes,
-        Lancamento.data < fim_mes
+        Lancamento.data.like(f"{ano}-{mes:02d}%"),
+        Lancamento.id_usuario == current_user.id
     ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
-    # Calculando as entradas e saídas
     entradas = sum(l.valor for l in lancamentos if l.tipo in ['Outras Receitas', 'ACI Recebida'])
     saidas = sum(l.valor for l in lancamentos if l.tipo in ['Outras Despesas', 'ACI Enviada'])
 
-    # Calculando o saldo final do mês
     saldo = saldo_inicial + entradas - saidas
 
-    # Formatando os valores para exibição
     saldo_inicial_formatado = formatar_moeda(saldo_inicial)
     entradas_formatado = formatar_moeda(entradas)
     saidas_formatado = formatar_moeda(saidas)
     saldo_formatado = formatar_moeda(saldo)
 
-    # Garantir que o mês tenha dois dígitos
     mes_formatado = str(mes).zfill(2)
 
-    # Renderizando a página
-    return render_template(
+    recalcular_saldos_finais()
+
+    response = make_response(render_template(
         'mes.html',
         mes=mes_formatado,
         ano=ano,
@@ -442,7 +461,9 @@ def mes(mes, ano):
         saldo=saldo_formatado,
         lancamentos=lancamentos,
         ano_vigente=ano_vigente
-    )
+    ))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response
 
 
 @app.route('/lancamentos')
@@ -551,7 +572,11 @@ def adicionar_lancamento(mes):
 
         db.session.commit()
 
-        recalcular_saldos_em_cadeia()
+        saldo_inicial = obter_saldo_inicial(mes, ano)
+
+        salvar_saldo_final(mes, ano, saldo_inicial)
+
+        recalcular_saldos_finais()
 
         return redirect(url_for('mes', mes=data.month, ano=data.year))
 
@@ -641,7 +666,9 @@ def excluir_lancamento(id):
 
             db.session.commit()
 
-            recalcular_saldos_em_cadeia()
+            saldo_inicial = obter_saldo_inicial(mes, ano)
+            salvar_saldo_final(mes, ano, saldo_inicial)
+            recalcular_saldos_finais()
 
             flash('Lançamento e comprovante excluídos com sucesso!', 'success')
         else:
@@ -692,8 +719,8 @@ def editar_lancamento(id):
         # Após editar o lançamento, recalcular os saldos
         mes = int(mes)  # Converte para inteiro
         ano = int(ano)  # Converte para inteiro
-
-        recalcular_saldos_em_cadeia()
+        
+        recalcular_saldos_finais()
 
         flash("Lançamento atualizado com sucesso!", "success")
         # Redireciona para a página do mês, passando 'mes' e 'ano' como parâmetros
@@ -958,37 +985,124 @@ def exportar_relatorio():
     pdf.set_fill_color(180, 230, 220)  # Azul
     pdf.cell(190, 8, f"Saldo Final: {(resumo.get('saldo_final_ano', 0.00))}", ln=True, align='C', fill=True)
 
-    # === Assinaturas ===
-    pdf.ln(18)  # Maior espaço antes das assinaturas
+    # Dados usados para gerar o hash único
+    agora = datetime.now()
+    dados_assinatura = f"{dados_config.tesoureiro_responsavel}|{dados_config.presidente_responsavel}|{ano}|{agora.isoformat()}"
+    hash_assinatura = sha256(dados_assinatura.encode()).hexdigest()
 
-    # Centralizando as assinaturas
-    pdf.set_font("Arial", size=10)
+    # Verifica se já existe assinatura para este usuário e ano
+    assinatura_existente = AssinaturaRelatorio.query.filter_by(
+        id_usuario=current_user.id,
+        ano=ano,
+        mes=0  # Assinatura de relatório anual
+    ).first()
 
-    # Assinatura Tesoureiro
-    assinatura_texto = f"{dados_config.tesoureiro_responsavel if hasattr(dados_config, 'tesoureiro_responsavel') else 'Não definido'}"
-    largura_assinatura = pdf.get_string_width(assinatura_texto) + 10  # Espaço extra para as linhas
-    pdf.set_x((pdf.w - largura_assinatura) / 2)  # Centraliza no eixo X
-    pdf.cell(largura_assinatura, 10, assinatura_texto, align='C')
-    pdf.line((pdf.w - largura_assinatura) / 2, pdf.get_y() + 3, (pdf.w + largura_assinatura) / 2, pdf.get_y() + 3)     
-    pdf.ln(5)
+    if assinatura_existente:
+        # Atualiza os dados existentes
+        assinatura_existente.hash = hash_assinatura
+        assinatura_existente.data_assinatura = agora
+    else:
+        # Cria novo registro
+        nova_assinatura = AssinaturaRelatorio(
+            hash=hash_assinatura,
+            data_assinatura=agora,
+            mes=0,  # indicando assinatura do relatório anual
+            ano=ano,
+            id_usuario=current_user.id
+        )
+        db.session.add(nova_assinatura)
 
-    pdf.set_font("Arial", size=10)
-    campo = f"Tesoureiro - {dados_config.ano_vigente if hasattr(dados_config, 'ano_vigente') else 'Não definido'}"
-    pdf.cell(190, 10, campo, ln=True, align='C') 
-    pdf.ln(18)  # Espaço entre as assinaturas
+    db.session.commit()
 
-    # Assinatura Presidente
-    assinatura_texto = f"{dados_config.presidente_responsavel if hasattr(dados_config, 'presidente_responsavel') else 'Não definido'}"
-    largura_assinatura = pdf.get_string_width(assinatura_texto) + 10  # Espaço extra para as linhas
-    pdf.set_x((pdf.w - largura_assinatura) / 2)  # Centraliza no eixo X
-    pdf.cell(largura_assinatura, 10, assinatura_texto, align='C')
-    pdf.line((pdf.w - largura_assinatura) / 2, pdf.get_y() + 3, (pdf.w + largura_assinatura) / 2, pdf.get_y() + 3)
-    pdf.ln(5)
-    
-    pdf.set_font("Arial", size=10)
-    campo = f"Presidente - {dados_config.ano_vigente if hasattr(dados_config, 'ano_vigente') else 'Não definido'}"
-    pdf.cell(190, 10, campo, ln=True, align='C')
-    pdf.ln(10)
+
+    # Caminho para o ícone de certificado
+    cert_icon_path = os.path.join(app.static_folder, "Logos/certificado.png")
+
+    # Espaço antes da seção
+    pdf.ln(12)
+
+    # === Bloco de assinatura Tesoureiro ===
+    largura_icone = 14
+    espaco_entre = 1
+
+    # Define as linhas do bloco
+    assinatura_linhas = [
+        "Assinado digitalmente por:",
+        f"Tesoureiro: {dados_config.tesoureiro_responsavel}",
+        f"Data/Hora: {agora.strftime('%d/%m/%Y %H:%M:%S')}"
+    ]
+
+    # Fonte para medição
+    pdf.set_font("Arial", size=8)
+
+    # Medidas
+    largura_texto = max(pdf.get_string_width(linha) for linha in assinatura_linhas)
+    largura_total = largura_icone + espaco_entre + largura_texto
+
+    # Ponto inicial centralizado no documento
+    x_inicial = (pdf.w - largura_total) / 2
+    y_inicial = pdf.get_y()
+
+    # Desenha o ícone
+    pdf.image(cert_icon_path, x=x_inicial, y=y_inicial, w=largura_icone, h=largura_icone)
+
+    # Escreve cada linha de texto ao lado do ícone
+    x_texto = x_inicial + largura_icone + espaco_entre
+    y_texto = y_inicial
+
+    for linha in assinatura_linhas:
+        pdf.set_xy(x_texto, y_texto)  # Corrige o X a cada linha
+        pdf.cell(w=largura_texto, h=5, txt=linha, ln=0, align='L')
+        y_texto += 5  # Avança linha
+
+    pdf.ln(12)
+
+
+
+    # === Bloco de assinatura Presidente ===
+    largura_icone = 14
+    espaco_entre = 1
+
+    # Define as linhas do bloco
+    assinatura_linhas = [
+        "Assinado digitalmente por:",
+        f"Presidente: {dados_config.presidente_responsavel}",
+        f"Data/Hora: {agora.strftime('%d/%m/%Y %H:%M:%S')}"
+    ]
+
+    # Fonte para medição
+    pdf.set_font("Arial", size=8)
+
+    # Medidas
+    largura_texto = max(pdf.get_string_width(linha) for linha in assinatura_linhas)
+    largura_total = largura_icone + espaco_entre + largura_texto
+
+    # Ponto inicial centralizado no documento
+    x_inicial = (pdf.w - largura_total) / 2
+    y_inicial = pdf.get_y()
+
+    # Desenha o ícone
+    pdf.image(cert_icon_path, x=x_inicial, y=y_inicial, w=largura_icone, h=largura_icone)
+
+    # Escreve cada linha de texto ao lado do ícone
+    x_texto = x_inicial + largura_icone + espaco_entre
+    y_texto = y_inicial
+
+    for linha in assinatura_linhas:
+        pdf.set_xy(x_texto, y_texto)  # Corrige o X a cada linha
+        pdf.cell(w=largura_texto, h=5, txt=linha, ln=0, align='L')
+        y_texto += 5  # Avança linha
+
+    pdf.ln(4)
+
+
+    # --- Link de validação ---
+    pdf.set_text_color(0, 0, 255)
+    link_validacao = f"http://localhost:8080/validar/{hash_assinatura}"
+    pdf.set_font("Arial", 'U', size=9)
+    pdf.cell(190, 8, "Verifique aqui a autenticidade do relatório", ln=True, align='C', link=link_validacao)
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(8)
 
     # Rodapé
     pdf.set_font("Arial", size=10)
@@ -1062,6 +1176,26 @@ def exportar_relatorio():
     pdf_path = os.path.join(relatorios_dir, pdf_file)  # Caminho completo do arquivo
     pdf.output(pdf_path)  # Salva o PDF na pasta 'relatorios'
     return send_file(pdf_path, as_attachment=True)  # Envia o arquivo ao usuário
+
+
+@app.route('/validar/<string:hash_assinatura>')
+def validar_assinatura(hash_assinatura):
+    assinatura = AssinaturaRelatorio.query.filter_by(hash=hash_assinatura).first()
+
+    if not assinatura:
+        return render_template('validacao.html', valida=False)
+
+    # Busca dados adicionais do usuário (opcional)
+    usuario = Usuario.query.get(assinatura.id_usuario)
+    config = Configuracao.query.filter_by(id_usuario=assinatura.id_usuario).first()
+
+    return render_template(
+        'validacao.html',
+        valida=True,
+        assinatura=assinatura,
+        usuario=usuario,
+        config=config
+    )
 
 
 def buscar_lancamentos(ano=None, mes=None):
@@ -1654,7 +1788,7 @@ def excluir_todos_lancamentos():
                 salvar_saldo_final(mes, ano_vigente, saldo_inicial)
 
             # Recalcula os saldos finais novamente para garantir que tudo esteja atualizado
-            recalcular_saldos_em_cadeia()
+            recalcular_saldos_finais()
 
             flash('Todos os lançamentos e comprovantes foram excluídos com sucesso!', 'success')
 
