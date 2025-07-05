@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import date
+from datetime import date, datetime
 
 
 
@@ -136,3 +136,16 @@ class SuporteMensagem(db.Model):
     data_resposta = db.Column(db.Date)
     usuario = db.relationship('Usuario', foreign_keys=[id_usuario], backref='mensagens_enviadas')
     usuario_resposta = db.relationship('Usuario', foreign_keys=[id_usuario_resposta], backref='mensagens_respondidas')
+
+class AssinaturaRelatorio(db.Model):
+    __tablename__ = 'assinatura_relatorio'
+
+    id = db.Column(db.Integer, primary_key=True)
+    hash = db.Column(db.String(64), unique=True, nullable=False)
+    data_assinatura = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    mes = db.Column(db.Integer, nullable=False)
+    ano = db.Column(db.Integer, nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<AssinaturaRelatorio {self.hash[:8]}... - {self.mes}/{self.ano}>'
