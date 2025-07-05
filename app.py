@@ -1050,17 +1050,20 @@ def exportar_relatorio():
     x_inicial = (pdf.w - largura_total) / 2
     y_inicial = pdf.get_y()
 
-    # Desenha o ícone
-    pdf.image(cert_icon_path, x=x_inicial, y=y_inicial, w=largura_icone, h=largura_icone)
+    # Se o ícone existir, desenha ele e ajusta posição do texto
+    if os.path.exists(cert_icon_path):
+        pdf.image(cert_icon_path, x=x_inicial, y=y_inicial, w=largura_icone, h=largura_icone)
+        x_texto = x_inicial + largura_icone + espaco_entre
+    else:
+        # Se não existir, começa o texto no centro ajustado
+        x_texto = (pdf.w - largura_texto) / 2
 
-    # Escreve cada linha de texto ao lado do ícone
-    x_texto = x_inicial + largura_icone + espaco_entre
+    # Escreve cada linha de texto ao lado (ou centralizado se sem ícone)
     y_texto = y_inicial
-
     for linha in assinatura_linhas:
-        pdf.set_xy(x_texto, y_texto)  # Corrige o X a cada linha
+        pdf.set_xy(x_texto, y_texto)
         pdf.cell(w=largura_texto, h=5, txt=linha, ln=0, align='L')
-        y_texto += 5  # Avança linha
+        y_texto += 5
 
     pdf.ln(12)
 
@@ -1088,17 +1091,20 @@ def exportar_relatorio():
     x_inicial = (pdf.w - largura_total) / 2
     y_inicial = pdf.get_y()
 
-    # Desenha o ícone
-    pdf.image(cert_icon_path, x=x_inicial, y=y_inicial, w=largura_icone, h=largura_icone)
+    # Se o ícone existir, desenha ele e ajusta posição do texto
+    if os.path.exists(cert_icon_path):
+        pdf.image(cert_icon_path, x=x_inicial, y=y_inicial, w=largura_icone, h=largura_icone)
+        x_texto = x_inicial + largura_icone + espaco_entre
+    else:
+        # Se não existir, começa o texto no centro ajustado
+        x_texto = (pdf.w - largura_texto) / 2
 
-    # Escreve cada linha de texto ao lado do ícone
-    x_texto = x_inicial + largura_icone + espaco_entre
+    # Escreve cada linha de texto ao lado (ou centralizado se sem ícone)
     y_texto = y_inicial
-
     for linha in assinatura_linhas:
-        pdf.set_xy(x_texto, y_texto)  # Corrige o X a cada linha
+        pdf.set_xy(x_texto, y_texto)
         pdf.cell(w=largura_texto, h=5, txt=linha, ln=0, align='L')
-        y_texto += 5  # Avança linha
+        y_texto += 5
 
     pdf.ln(4)
 
