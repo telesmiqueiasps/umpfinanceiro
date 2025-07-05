@@ -427,13 +427,20 @@ def mes(mes, ano):
     configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
     ano_vigente = configuracao.ano_vigente if configuracao else datetime.now().year  
-
     ano = ano_vigente  
 
     saldo_inicial = obter_saldo_inicial(mes, ano)
 
+    # Definir intervalo de datas para o mês
+    data_inicio = datetime(ano, mes, 1)
+    if mes == 12:
+        data_fim = datetime(ano + 1, 1, 1)
+    else:
+        data_fim = datetime(ano, mes + 1, 1)
+
     lancamentos = Lancamento.query.filter(
-        Lancamento.data.like(f"{ano}-{mes:02d}%"),
+        Lancamento.data >= data_inicio,
+        Lancamento.data < data_fim,
         Lancamento.id_usuario == current_user.id
     ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
