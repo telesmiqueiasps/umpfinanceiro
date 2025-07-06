@@ -270,8 +270,7 @@ def configuracoes():
         # Salva as mudanças no banco
         db.session.commit()
 
-        # Recalcula os saldos finais
-        recalcular_saldos_finais()
+        propagar_recalculo_a_partir(mes_inicial=1, ano=config.ano_vigente)
 
         flash('Configurações salvas com sucesso!', 'success')
         return redirect(url_for('configuracoes'))  # Redireciona para evitar reenvio do formulário
@@ -417,7 +416,59 @@ def recalcular_saldos_finais():
 
     db.session.commit()
 
+def atualizar_saldo_final_ao_lancar(mes, ano):
+    saldo_inicial = obter_saldo_inicial(mes, ano)
+    saldo_final = calcular_saldo_final(mes, ano, saldo_inicial)
 
+    saldo_existente = db.session.query(SaldoFinal).filter_by(
+        mes=mes,
+        ano=ano,
+        id_usuario=current_user.id
+    ).first()
+
+    if saldo_existente:
+        saldo_existente.saldo = saldo_final
+    else:
+        saldo_novo = SaldoFinal(
+            mes=mes,
+            ano=ano,
+            saldo=saldo_final,
+            id_usuario=current_user.id
+        )
+        db.session.add(saldo_novo)
+
+    db.session.commit()
+
+def propagar_recalculo_a_partir(mes_inicial, ano):
+    """
+    A partir do mês alterado, recalcula os saldos dos meses seguintes em ordem.
+    """
+    saldo = obter_saldo_inicial(mes_inicial, ano)
+
+    for mes in range(mes_inicial, 13):
+        saldo_final = calcular_saldo_final(mes, ano, saldo)
+
+        saldo_existente = db.session.query(SaldoFinal).filter_by(
+            mes=mes,
+            ano=ano,
+            id_usuario=current_user.id
+        ).first()
+
+        if saldo_existente:
+            saldo_existente.saldo = saldo_final
+        else:
+            novo = SaldoFinal(
+                mes=mes,
+                ano=ano,
+                saldo=saldo_final,
+                id_usuario=current_user.id
+            )
+            db.session.add(novo)
+
+        # O saldo final de agora será o saldo inicial do próximo mês
+        saldo = saldo_final
+
+    db.session.commit()
 
 
 @app.route('/mes/<int:mes>/<int:ano>')
@@ -431,16 +482,9 @@ def mes(mes, ano):
 
     saldo_inicial = obter_saldo_inicial(mes, ano)
 
-    # Definir intervalo de datas para o mês
-    data_inicio = datetime(ano, mes, 1)
-    if mes == 12:
-        data_fim = datetime(ano + 1, 1, 1)
-    else:
-        data_fim = datetime(ano, mes + 1, 1)
-
     lancamentos = Lancamento.query.filter(
-        Lancamento.data >= data_inicio,
-        Lancamento.data < data_fim,
+        db.extract('year', Lancamento.data) == ano,
+        db.extract('month', Lancamento.data) == mes,
         Lancamento.id_usuario == current_user.id
     ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
@@ -453,10 +497,8 @@ def mes(mes, ano):
     entradas_formatado = formatar_moeda(entradas)
     saidas_formatado = formatar_moeda(saidas)
     saldo_formatado = formatar_moeda(saldo)
-
     mes_formatado = str(mes).zfill(2)
 
-    recalcular_saldos_finais()
 
     response = make_response(render_template(
         'mes.html',
@@ -579,11 +621,7 @@ def adicionar_lancamento(mes):
 
         db.session.commit()
 
-        saldo_inicial = obter_saldo_inicial(mes, ano)
-
-        salvar_saldo_final(mes, ano, saldo_inicial)
-
-        recalcular_saldos_finais()
+        propagar_recalculo_a_partir(mes_inicial=data.month, ano=data.year)
 
         return redirect(url_for('mes', mes=data.month, ano=data.year))
 
@@ -673,9 +711,7 @@ def excluir_lancamento(id):
 
             db.session.commit()
 
-            saldo_inicial = obter_saldo_inicial(mes, ano)
-            salvar_saldo_final(mes, ano, saldo_inicial)
-            recalcular_saldos_finais()
+            propagar_recalculo_a_partir(mes_inicial=mes, ano=ano)
 
             flash('Lançamento e comprovante excluídos com sucesso!', 'success')
         else:
@@ -727,7 +763,7 @@ def editar_lancamento(id):
         mes = int(mes)  # Converte para inteiro
         ano = int(ano)  # Converte para inteiro
         
-        recalcular_saldos_finais()
+        propagar_recalculo_a_partir(mes_inicial=mes, ano=ano)
 
         flash("Lançamento atualizado com sucesso!", "success")
         # Redireciona para a página do mês, passando 'mes' e 'ano' como parâmetros
@@ -1764,50 +1800,50 @@ def admin_visualizar_comprovantes(filename):
 
 
 @app.route('/excluir_todos_lancamentos', methods=['GET', 'POST'])
-@login_required  # Garante que apenas usuários logados acessem essa rota
+@login_required
 def excluir_todos_lancamentos():
-    if request.method == 'POST':  # Verifica se é uma requisição POST
+    if request.method == 'POST':
         with app.app_context():
-            # Busca todos os lançamentos do usuário logado
+            # Exclui os lançamentos e comprovantes
             lancamentos = Lancamento.query.filter_by(id_usuario=current_user.id).all()
 
             if not lancamentos:
                 flash('Nenhum lançamento encontrado para exclusão.', 'warning')
                 return redirect(url_for('excluir_todos_lancamentos'))
 
-            # Excluir os comprovantes associados (se existirem)
             for lancamento in lancamentos:
                 if lancamento.comprovante:
                     comprovante_path = lancamento.comprovante
-
                     if os.path.exists(comprovante_path):
                         os.remove(comprovante_path)
                         print(f"Comprovante excluído: {comprovante_path}")
                     else:
                         print(f"Arquivo não encontrado: {comprovante_path}")
 
-                # Remove cada lançamento do banco de dados
                 db.session.delete(lancamento)
 
-            # Commit das alterações no banco de dados
             db.session.commit()
 
-            # Recalcular os saldos finais após a exclusão em todos os meses do ano vigente
+            # Recalcula saldos do ano vigente
             configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
             ano_vigente = configuracao.ano_vigente if configuracao else datetime.now().year
 
-            for mes in range(1, 13):
-                saldo_inicial = obter_saldo_inicial(mes, ano_vigente)
-                salvar_saldo_final(mes, ano_vigente, saldo_inicial)
+            # Remove todos os saldos antigos
+            SaldoFinal.query.filter_by(id_usuario=current_user.id).delete()
+            db.session.commit()
 
-            # Recalcula os saldos finais novamente para garantir que tudo esteja atualizado
-            recalcular_saldos_finais()
+            # Salva saldo de janeiro com base no configurado
+            saldo_janeiro = configuracao.saldo_inicial or 0
+            salvar_saldo_final(1, ano_vigente, saldo_janeiro)
+
+            # Propaga os saldos a partir de janeiro
+            propagar_recalculo_a_partir(mes_inicial=1, ano=ano_vigente)
 
             flash('Todos os lançamentos e comprovantes foram excluídos com sucesso!', 'success')
 
-        return redirect(url_for('excluir_todos_lancamentos'))  # Redireciona para a mesma página de exclusão após a operação
+        return redirect(url_for('excluir_todos_lancamentos'))
 
-    return render_template('excluir_lancamentos.html')  # Renderiza a página de confirmação de exclusão
+    return render_template('excluir_lancamentos.html')
 
 
 
