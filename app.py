@@ -1111,7 +1111,7 @@ def exportar_relatorio():
 
     # --- Link de validação ---
     pdf.set_text_color(0, 0, 255)
-    link_validacao = f"http://localhost:8080/validar/{hash_assinatura}"
+    link_validacao = f"https://web-production-2a02a.up.railway.app//validar/{hash_assinatura}"
     pdf.set_font("Arial", 'U', size=9)
     pdf.cell(190, 8, "Verifique aqui a autenticidade do relatório", ln=True, align='C', link=link_validacao)
     pdf.set_text_color(0, 0, 0)
