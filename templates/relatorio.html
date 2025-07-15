@@ -10,7 +10,7 @@
     <div class="max-w-5xl mx-auto">
         <!-- Cabeçalho -->
         <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-semibold text-blue-600">Relatório Financeiro - {{ ano }}</h1>
+            <h1 class="text-3xl font-semibold text-blue-600">Relatório Financeiro</h1>
             <div class="flex space-x-4">
                 <a href="{{ url_for('exportar_relatorio', ano=ano, mes=mes) }}" class="flex items-center justify-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
                     <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -27,14 +27,6 @@
             </div>
         </div>
 
-        <!-- Subtítulo (se houver mês) -->
-        {% if mes %}
-            <div class="text-center mb-6">
-                <h2 class="text-xl font-medium text-blue-600">
-                    Mês: {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][mes-1] }}
-                </h2>
-            </div>
-        {% endif %}
 
         <!-- Bloco de Informações de Identificação -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -65,8 +57,18 @@
                     <p class="text-base font-medium text-blue-600 mt-1">{{ dados[0]['configuracao'].federacao_sinodo if dados[0]['configuracao'] else 'Não definido' }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-600">Ano Vigente</p>
-                    <p class="text-base font-medium text-blue-600 mt-1">{{ dados[0]['configuracao'].ano_vigente if dados[0]['configuracao'] else 'Não definido' }}</p>
+                    <p class="text-sm text-gray-600">Gestão</p>
+                    <p class="text-base font-medium text-blue-600 mt-1">
+                        {% if dados[0]['configuracao'] %}
+                            {% if dados[0]['configuracao'].sinodal == 'Sim' %}
+                                {{ dados[0]['configuracao'].ano_vigente }}/{{ dados[0]['configuracao'].ano_vigente + 2 }}
+                            {% else %}
+                                {{ dados[0]['configuracao'].ano_vigente }}
+                            {% endif %}
+                        {% else %}
+                            Não definido
+                        {% endif %}
+                    </p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-600">Tesoureiro Responsável</p>
@@ -114,7 +116,7 @@
         {% for item in dados %}
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h2 class="text-xl font-medium text-blue-600 mb-4">
-                    Mês: {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][item['mes']-1] }}
+                    Mês: {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][item['mes']-1] }} de {{ item['ano'] }}
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     <div class="text-center p-4 bg-blue-50 rounded-lg">
