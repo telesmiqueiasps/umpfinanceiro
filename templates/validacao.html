@@ -2,77 +2,217 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Validação de Relatório - UMP Financeiro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-            background-color: #f0f2f5;
-            color: #333;
+        :root {
+            --primary: #0066cc;
+            --primary-light: #e6f2ff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --gray: #6c757d;
+            --light-gray: #f8f9fa;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
         }
-        .caixa {
-            max-width: 650px;
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            padding: 20px;
+            background-color: var(--light-gray);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 700px;
+            width: 100%;
             margin: auto;
-            padding: 40px;
+        }
+        
+        .card {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
             text-align: center;
         }
+        
         .logo {
-            width: 120px;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        .validation-status {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+        }
+        
+        .valid {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+        
+        .invalid {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+        
+        .status-icon {
+            font-size: 48px;
             margin-bottom: 15px;
         }
-        .titulo {
-            font-size: 26px;
-            font-weight: bold;
-            margin-bottom: 25px;
-            color: #006699;
+        
+        .status-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
         }
-        .valido {
-            color: green;
-            font-weight: bold;
-            font-size: 20px;
-            margin-bottom: 20px;
+        
+        .details-list {
+            margin-top: 25px;
         }
-        .invalido {
-            color: red;
-            font-weight: bold;
-            font-size: 20px;
-            margin-bottom: 20px;
+        
+        .detail-item {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-        ul {
-            list-style: none;
-            padding: 0;
-            text-align: left;
+        
+        .detail-label {
+            flex: 0 0 40%;
+            font-weight: 500;
+            color: var(--gray);
+        }
+        
+        .detail-value {
+            flex: 1;
+            font-weight: 400;
+        }
+        
+        .validation-code {
+            background: var(--primary-light);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-family: monospace;
+            word-break: break-all;
             margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
         }
-        li {
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 20px;
+            }
+            
+            .detail-item {
+                flex-direction: column;
+            }
+            
+            .detail-label {
+                margin-bottom: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="caixa">
-        <img src="{{ url_for('static', filename='Logos/logo_sinodal 01.png') }}" alt="Logo UMP" class="logo">
-        <div class="titulo">UMP Financeiro</div>
-
-        {% if valida %}
-            <div class="valido">Relatório autenticado com sucesso!</div>
-            <p><strong>Assinado por:</strong></p>
-            <ul>
-                <li><strong>Tesoureiro:</strong> {{ config.tesoureiro_responsavel }}</li>
-                <li><strong>Presidente:</strong> {{ config.presidente_responsavel }}</li>
-                <li><strong>Organização:</strong> {{ config.ump_federacao }} - {{ config.federacao_sinodo }}</li>
-                <li><strong>Ano:</strong> {{ assinatura.ano }}</li>
-                <li><strong>Data da Assinatura:</strong> {{ assinatura.data_assinatura.strftime('%d/%m/%Y %H:%M:%S') }}</li>
-                <li><strong>Código de Validação:</strong> {{ assinatura.hash }}</li>
-            </ul>
-        {% else %}
-            <div class="invalido">Assinatura inválida ou não encontrada.</div>
-            <p>Documento pode ter sido alterado.</p>
-        {% endif %}
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <img src="{{ url_for('static', filename='Logos/logo_sinodal 01.png') }}" alt="Logo UMP" class="logo">
+                <h1 class="card-title">Validação de Relatório Financeiro</h1>
+            </div>
+            
+            <div class="card-body">
+                {% if valida %}
+                    <div class="validation-status valid">
+                        <div class="status-icon">✓</div>
+                        <h2 class="status-title">Relatório Autenticado com Sucesso!</h2>
+                        <p>Este documento foi verificado e está válido.</p>
+                    </div>
+                    
+                    <div class="details-list">
+                        <div class="detail-item">
+                            <span class="detail-label">Tesoureiro Responsável:</span>
+                            <span class="detail-value">{{ config.tesoureiro_responsavel }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Presidente Responsável:</span>
+                            <span class="detail-value">{{ config.presidente_responsavel }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Organização:</span>
+                            <span class="detail-value">{{ config.ump_federacao }} - {{ config.federacao_sinodo }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Gestão:</span>
+                            <span class="detail-value">
+                                {% if config.sinodal == 'Sim' %}
+                                    {{ assinatura.ano }}/{{ assinatura.ano + 2 }}
+                                {% else %}
+                                    {{ assinatura.ano }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Data da Assinatura:</span>
+                            <span class="detail-value">{{ assinatura.data_assinatura.strftime('%d/%m/%Y %H:%M:%S') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="validation-code">
+                        <strong>Código de Validação:</strong><br>
+                        {{ assinatura.hash }}
+                    </div>
+                {% else %}
+                    <div class="validation-status invalid">
+                        <div class="status-icon">✗</div>
+                        <h2 class="status-title">Assinatura Inválida</h2>
+                        <p>O documento não pôde ser validado ou foi alterado.</p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Por favor, entre em contato com a tesouraria da UMP para verificar este documento.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Sistema de Validação UMP Financeiro &copy; {{ assinatura.ano }}</p>
+        </div>
     </div>
 </body>
 </html>
