@@ -23,11 +23,11 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-medium text-blue-600 mb-6 text-center">Escolha um Mês</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {% for i in range(1, 13) %}
-                    <a href="{{ url_for('mes', mes=i, ano=ano) }}" 
+                {% for m, a in meses_disponiveis %}
+                    <a href="{{ url_for('mes', mes=m, ano=a) }}" 
                        class="block text-center py-3 px-4 rounded-lg bg-blue-50 text-blue-600 text-base font-medium 
                               transition-all duration-200 hover:bg-blue-100 hover:shadow-md animate-fade-in">
-                        {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][i-1] }}
+                        {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][i-1] }} / {{ a }}
                     </a>
                 {% endfor %}
             </div>
