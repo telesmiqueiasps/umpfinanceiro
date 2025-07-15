@@ -11,7 +11,7 @@
         <!-- Cabeçalho -->
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-semibold text-blue-600">Editar Lançamento</h1>
-            <a href="/mes/{{ mes }}/{{ ano }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+            <a href="{{ url_for('mes', mes=mes, ano=ano) }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
                 <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -21,11 +21,11 @@
 
         <!-- Formulário em Bloco -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <form method="POST" class="space-y-6">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 <!-- Data -->
                 <div>
                     <label for="data" class="block text-sm text-gray-600 font-medium">Data</label>
-                    <input type="date" name="data" value="{{ lancamento.data }}" class="input-field" required>
+                    <input type="date" name="data" value="{{ lancamento.data.strftime('%Y-%m-%d') }}" class="input-field" required>
                 </div>
 
                 <!-- Tipo -->
@@ -48,7 +48,20 @@
                 <!-- Valor -->
                 <div>
                     <label for="valor" class="block text-sm text-gray-600 font-medium">Valor</label>
-                    <input type="number" step="0.01" name="valor" value="{{ lancamento.valor }}" class="input-field" required>
+                    <input type="number" step="0.01" name="valor" value="{{ '%.2f' | format(lancamento.valor) }}" class="input-field" required>
+                </div>
+
+                <!-- Comprovante -->
+                <div>
+                    <label for="comprovante" class="block text-sm text-gray-600 font-medium">Comprovante (opcional)</label>
+                    <input type="file" name="comprovante" class="input-field">
+                    
+                    {% if lancamento.comprovante %}
+                        <p class="text-xs text-gray-500 mt-2">Atual:</p>
+                        <img src="{{ url_for('serve_file', filename=lancamento.comprovante.split('/')[-1]) }}"
+                        alt="Comprovante"
+                        class="mt-1 rounded border max-w-xs max-h-60 shadow-md">
+                    {% endif %}
                 </div>
 
                 <!-- Botões -->
@@ -56,7 +69,7 @@
                     <button type="submit" class="w-full py-3 px-4 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 transition-all duration-200">
                         Salvar Alterações
                     </button>
-                    <a href="/mes/{{ mes }}/{{ ano }}" 
+                    <a href="{{ url_for('mes', mes=mes, ano=ano) }}" 
                        class="w-full text-center py-3 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200">
                         Cancelar
                     </a>
