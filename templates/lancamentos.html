@@ -27,7 +27,7 @@
                     <a href="{{ url_for('mes', mes=m, ano=a) }}" 
                        class="block text-center py-3 px-4 rounded-lg bg-blue-50 text-blue-600 text-base font-medium 
                               transition-all duration-200 hover:bg-blue-100 hover:shadow-md animate-fade-in">
-                        {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][i-1] }} / {{ a }}
+                        {{ ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][m-1] }} / {{ a }}
                     </a>
                 {% endfor %}
             </div>
