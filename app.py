@@ -2222,7 +2222,8 @@ def cadastro():
             presidente_responsavel='Vazio',
             saldo_inicial=0.0,
             email=email,
-            ultimo_id_lancamento=0
+            ultimo_id_lancamento=0,
+            mes_inicio_bienio=1
         )
         db.session.add(configuracao)
         db.session.commit()
