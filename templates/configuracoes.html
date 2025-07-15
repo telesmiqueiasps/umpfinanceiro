@@ -53,9 +53,31 @@
 
                     <!-- Ano Vigente -->
                     <div class="sm:col-span-2">
-                        <label class="block text-sm text-gray-600 font-medium">Ano Vigente</label>
+                        <label class="block text-sm text-gray-600 font-medium">
+                            {% if config and config.sinodal == 'Sim' %}
+                                Ano de Início da Gestão
+                            {% elif config and config.gestor == 'Sim' %}
+                                Ano Vigente
+                            {% else %}
+                                Ano vigente
+                            {% endif %}
+                        </label>
                         <input type="number" name="ano_vigente" value="{{ config.ano_vigente or '' }}" required class="input-field">
                     </div>
+
+                    {% if config and config.sinodal == 'Sim' %}
+                    <!-- Mês de Início da Gestão Bienal -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm text-gray-600 font-medium">Mês de Início da Gestão Bienal</label>
+                        <select name="mes_inicio_bienio" required class="input-field">
+                            {% for i in range(1, 13) %}
+                                <option value="{{ i }}" {% if config.mes_inicio_bienio == i %}selected{% endif %}>
+                                    {{ '{:02d}'.format(i) }} - {{ ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][i-1] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
 
                     <!-- Tesoureiro Responsável -->
                     <div class="sm:col-span-2">
