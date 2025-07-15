@@ -7,7 +7,7 @@ import os, sqlite3, locale
 from io import BytesIO
 from fpdf import FPDF
 from PIL import Image
-from sqlalchemy import func, extract, event
+from sqlalchemy import func, extract, event, tuple_
 from pdf2image import convert_from_path
 from werkzeug.utils import secure_filename
 import random
@@ -26,7 +26,7 @@ import threading
 from urllib.parse import quote_plus
 from supabase import create_client
 from hashlib import sha256
-
+from dateutil.relativedelta import relativedelta
 
 
 
@@ -262,15 +262,41 @@ def configuracoes():
         except ValueError:
             saldo_inicial = 0.0
 
-        config.saldo_inicial = saldo_inicial
-
-        # Atualiza o ano na tabela saldo_final para o usuário logado
-        SaldoFinal.query.filter_by(id_usuario=current_user.id).update({"ano": config.ano_vigente})
+        # Define mês de início
+        if config.sinodal == "Sim":
+            try:
+                config.mes_inicio_bienio = int(request.form['mes_inicio_bienio'])
+            except:
+                config.mes_inicio_bienio = 6  # junho padrão
+        else:
+            config.mes_inicio_bienio = 1  # janeiro padrão
 
         # Salva as mudanças no banco
         db.session.commit()
 
-        propagar_recalculo_a_partir(mes_inicial=1, ano=config.ano_vigente)
+        # Garante criação e atualização dos saldos conforme o tipo de gestão
+        total_meses = 27 if config.sinodal == "Sim" else 12
+
+        saldos = SaldoFinal.query.filter_by(id_usuario=current_user.id).order_by(SaldoFinal.id).all()
+
+        # Ajusta quantidade de linhas
+        if len(saldos) < total_meses:
+            for _ in range(total_meses - len(saldos)):
+                db.session.add(SaldoFinal(mes=1, ano=2000, saldo=0.0, id_usuario=current_user.id))
+            db.session.commit()
+            saldos = SaldoFinal.query.filter_by(id_usuario=current_user.id).order_by(SaldoFinal.id).all()
+
+        # Atualiza os saldos existentes com novos meses/anos
+        mes_base = config.mes_inicio_bienio
+        for i, saldo in enumerate(saldos[:total_meses]):
+            mes = ((mes_base - 1 + i) % 12) + 1
+            ano = config.ano_vigente + ((mes_base - 1 + i) // 12)
+            saldo.mes = mes
+            saldo.ano = ano
+
+        db.session.commit()
+
+        propagar_recalculo_a_partir(mes_inicial=config.mes_inicio_bienio, ano_base=config.ano_vigente)
 
         flash('Configurações salvas com sucesso!', 'success')
         return redirect(url_for('configuracoes'))  # Redireciona para evitar reenvio do formulário
@@ -292,25 +318,29 @@ def verificar_email_existente(email, id_usuario):
 
 
 def obter_saldo_inicial(mes, ano):
-    ano_vigente = db.session.query(Configuracao.ano_vigente).filter_by(id_usuario=current_user.id).scalar()
+    config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    if not config:
+        return 0.0
 
-    if not ano_vigente:
-        return 0  
+    mes_inicio = config.mes_inicio_bienio if config.sinodal == "Sim" else 1
+    ano_inicio = config.ano_vigente
 
-    if ano != ano_vigente:
-        ano = ano_vigente  
+    if mes == mes_inicio and ano == ano_inicio:
+        return config.saldo_inicial or 0.0
 
-    if mes == 1:
-        saldo_inicial = db.session.query(Configuracao.saldo_inicial).filter_by(id_usuario=current_user.id).scalar()
-        return saldo_inicial if saldo_inicial is not None else 0  
+    mes_anterior = mes - 1
+    ano_anterior = ano
+    if mes_anterior == 0:
+        mes_anterior = 12
+        ano_anterior -= 1
 
     saldo_anterior = db.session.query(SaldoFinal.saldo).filter_by(
-        mes=mes - 1,
-        ano=ano,  
+        mes=mes_anterior,
+        ano=ano_anterior,
         id_usuario=current_user.id
     ).scalar()
 
-    return saldo_anterior if saldo_anterior is not None else 0 
+    return saldo_anterior or 0.0 
 
 
 
@@ -439,18 +469,23 @@ def atualizar_saldo_final_ao_lancar(mes, ano):
 
     db.session.commit()
 
-def propagar_recalculo_a_partir(mes_inicial, ano):
-    """
-    A partir do mês alterado, recalcula os saldos dos meses seguintes em ordem.
-    """
-    saldo = obter_saldo_inicial(mes_inicial, ano)
+def propagar_recalculo_a_partir(mes_inicial, ano_base):
+    config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    if not config:
+        return
 
-    for mes in range(mes_inicial, 13):
-        saldo_final = calcular_saldo_final(mes, ano, saldo)
+    total_meses = 27 if config.sinodal == "Sim" else 12
+    saldo = obter_saldo_inicial(mes_inicial, ano_base)
 
-        saldo_existente = db.session.query(SaldoFinal).filter_by(
-            mes=mes,
-            ano=ano,
+    for i in range(total_meses):
+        mes_atual = ((mes_inicial - 1 + i) % 12) + 1
+        ano_atual = ano_base + ((mes_inicial - 1 + i) // 12)
+
+        saldo_final = calcular_saldo_final(mes_atual, ano_atual, saldo)
+
+        saldo_existente = SaldoFinal.query.filter_by(
+            mes=mes_atual,
+            ano=ano_atual,
             id_usuario=current_user.id
         ).first()
 
@@ -458,70 +493,105 @@ def propagar_recalculo_a_partir(mes_inicial, ano):
             saldo_existente.saldo = saldo_final
         else:
             novo = SaldoFinal(
-                mes=mes,
-                ano=ano,
+                mes=mes_atual,
+                ano=ano_atual,
                 saldo=saldo_final,
                 id_usuario=current_user.id
             )
             db.session.add(novo)
 
-        # O saldo final de agora será o saldo inicial do próximo mês
         saldo = saldo_final
 
     db.session.commit()
 
 
 @app.route('/mes/<int:mes>/<int:ano>')
-@login_required  
-def mes(mes, ano):  
-
+@login_required
+def mes(mes, ano):
     configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
-    ano_vigente = configuracao.ano_vigente if configuracao else datetime.now().year  
-    ano = ano_vigente  
+    if not configuracao:
+        flash("Configuração do usuário não encontrada.", "warning")
+        return redirect(url_for('index'))
 
+    # Define se o usuário é sinodal
+    sinodal = configuracao.sinodal == "Sim"
+    ano_vigente = configuracao.ano_vigente
+    mes_inicio = configuracao.mes_inicio_bienio if sinodal else 1
+    total_meses = 27 if sinodal else 12
+
+    # Gera os pares (mes, ano) válidos para navegação
+    meses_validos = []
+    for i in range(total_meses):
+        m = ((mes_inicio - 1 + i) % 12) + 1
+        a = ano_vigente + ((mes_inicio - 1 + i) // 12)
+        meses_validos.append((m, a))
+
+    # Verifica se o mês/ano solicitado está dentro dos permitidos
+    if (mes, ano) not in meses_validos:
+        flash("Mês fora do intervalo da gestão configurada.", "danger")
+        return redirect(url_for('index'))
+
+    # Obtem saldo inicial
     saldo_inicial = obter_saldo_inicial(mes, ano)
 
+    # Consulta os lançamentos do mês
     lancamentos = Lancamento.query.filter(
         db.extract('year', Lancamento.data) == ano,
         db.extract('month', Lancamento.data) == mes,
         Lancamento.id_usuario == current_user.id
     ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
+    # Cálculo das somas
     entradas = sum(l.valor for l in lancamentos if l.tipo in ['Outras Receitas', 'ACI Recebida'])
     saidas = sum(l.valor for l in lancamentos if l.tipo in ['Outras Despesas', 'ACI Enviada'])
 
     saldo = saldo_inicial + entradas - saidas
 
+    # Formatação
     saldo_inicial_formatado = formatar_moeda(saldo_inicial)
     entradas_formatado = formatar_moeda(entradas)
     saidas_formatado = formatar_moeda(saidas)
     saldo_formatado = formatar_moeda(saldo)
     mes_formatado = str(mes).zfill(2)
 
-
     response = make_response(render_template(
         'mes.html',
-        mes=mes_formatado,
+        mes=mes,
+        mes_formatado=mes_formatado,
         ano=ano,
         saldo_inicial=saldo_inicial_formatado,
         entradas=entradas_formatado,
         saidas=saidas_formatado,
         saldo=saldo_formatado,
         lancamentos=lancamentos,
-        ano_vigente=ano_vigente
+        ano_vigente=ano_vigente,
+        meses_disponiveis=meses_validos
     ))
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response
 
 
 @app.route('/lancamentos')
+@login_required
 def lancamentos():
-    # Obtém o ano vigente da configuração do usuário logado
-    configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-    ano_atual = configuracao.ano_vigente if configuracao else datetime.now().year  
+    config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    if not config:
+        flash("Configuração do usuário não encontrada.", "warning")
+        return redirect(url_for('index'))
 
-    return render_template('lancamentos.html', ano=ano_atual)
+    sinodal = config.sinodal == "Sim"
+    mes_inicio = config.mes_inicio_bienio if sinodal else 1
+    total_meses = 27 if sinodal else 12
+    ano_base = config.ano_vigente
+
+    meses_disponiveis = []
+    for i in range(total_meses):
+        m = ((mes_inicio - 1 + i) % 12) + 1
+        a = ano_base + ((mes_inicio - 1 + i) // 12)
+        meses_disponiveis.append((m, a))
+
+    return render_template('lancamentos.html', meses_disponiveis=meses_disponiveis)
 
 def reprocessar_png_para_nao_interlaced(path_original):
     try:
@@ -532,11 +602,30 @@ def reprocessar_png_para_nao_interlaced(path_original):
         print(f"Erro ao reprocessar PNG: {e}")
 
 
-@app.route('/adicionar_lancamento/<int:mes>', methods=['GET', 'POST'])
+@app.route('/adicionar_lancamento/<int:mes>/<int:ano>', methods=['GET', 'POST'])
 @login_required 
-def adicionar_lancamento(mes):
+def adicionar_lancamento(mes, ano):
     configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-    ano = configuracao.ano_vigente if configuracao else datetime.now().year  
+    if not configuracao:
+        flash("Configuração do usuário não encontrada.", "warning")
+        return redirect(url_for('index'))
+
+    sinodal = configuracao.sinodal == "Sim"
+    mes_inicio = configuracao.mes_inicio_bienio if sinodal else 1
+    total_meses = 27 if sinodal else 12
+    ano_base = configuracao.ano_vigente
+
+    # Gera todos os pares válidos
+    meses_validos = []
+    for i in range(total_meses):
+        m = ((mes_inicio - 1 + i) % 12) + 1
+        a = ano_base + ((mes_inicio - 1 + i) // 12)
+        meses_validos.append((m, a))
+
+    # Verifica se o mês/ano informado está dentro da gestão
+    if (mes, ano) not in meses_validos:
+        flash("Mês fora do intervalo da gestão configurada.", "danger")
+        return redirect(url_for('lancamentos'))  
 
     if request.method == 'POST':
         data = request.form.get('data')
@@ -547,14 +636,18 @@ def adicionar_lancamento(mes):
 
         if not data or not tipo or not descricao or not valor:
             flash("Erro: Todos os campos devem ser preenchidos.", "danger")
-            return redirect(url_for('adicionar_lancamento', mes=mes))
+            return redirect(url_for('adicionar_lancamento', mes=mes, ano=ano))
 
         try:
             data = datetime.strptime(data, '%Y-%m-%d').date()
             valor = float(valor)
         except ValueError:
             flash("Erro: Data ou valor inválidos.", "danger")
-            return redirect(url_for('adicionar_lancamento', mes=mes))
+            return redirect(url_for('adicionar_lancamento', mes=mes, ano=ano))
+
+        if (data.month, data.year) not in meses_validos:
+            flash("Erro: A data informada está fora do intervalo da gestão.", "danger")
+            return redirect(url_for('adicionar_lancamento', mes=mes, ano=ano))
 
         if 'comprovante' in request.files:
             file = request.files['comprovante']
@@ -621,11 +714,13 @@ def adicionar_lancamento(mes):
 
         db.session.commit()
 
-        propagar_recalculo_a_partir(mes_inicial=data.month, ano=data.year)
+        propagar_recalculo_a_partir(data.month, data.year)
+
+        flash("Lançamento adicionado com sucesso!", "success")
 
         return redirect(url_for('mes', mes=data.month, ano=data.year))
 
-    return render_template('adicionar_lancamento.html', mes=mes, ano_atual=ano)
+    return render_template('adicionar_lancamento.html', mes=mes, ano=ano)
 
 
 
@@ -678,10 +773,33 @@ def excluir_lancamento(id):
 
     if not mes or not ano:
         flash('Erro: Mês ou ano não informado.', 'danger')
-        return redirect(url_for('mes', mes=1, ano=2025))  
+        config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+        ano_base = config.ano_vigente if config else datetime.now().year
+        return redirect(url_for('mes', mes=1, ano=ano_base))
 
     mes = int(mes)  
-    ano = int(ano)  
+    ano = int(ano)
+
+    configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    if not configuracao:
+        flash("Configuração do usuário não encontrada.", "warning")
+        return redirect(url_for('index'))
+
+    sinodal = configuracao.sinodal == "Sim"
+    mes_inicio = configuracao.mes_inicio_bienio if sinodal else 1
+    total_meses = 27 if sinodal else 12
+    ano_base = configuracao.ano_vigente
+
+    # Gera os meses válidos da gestão
+    meses_validos = []
+    for i in range(total_meses):
+        m = ((mes_inicio - 1 + i) % 12) + 1
+        a = ano_base + ((mes_inicio - 1 + i) // 12)
+        meses_validos.append((m, a))
+
+    if (mes, ano) not in meses_validos:
+        flash("Erro: Mês fora do intervalo da gestão configurada.", "danger")
+        return redirect(url_for('mes', mes=mes, ano=ano))  
 
     with app.app_context():
         lancamento = Lancamento.query.filter_by(
@@ -708,10 +826,10 @@ def excluir_lancamento(id):
 
             for index, lanc in enumerate(todos_lancamentos, start=1):
                 lanc.id_lancamento = index
-
+    
             db.session.commit()
 
-            propagar_recalculo_a_partir(mes_inicial=mes, ano=ano)
+            propagar_recalculo_a_partir(mes, ano)
 
             flash('Lançamento e comprovante excluídos com sucesso!', 'success')
         else:
@@ -740,16 +858,106 @@ def editar_lancamento(id):
 
     if not mes or not ano:
         flash("Erro: Mês ou ano não informado.", "danger")
-        return redirect(url_for('mes', mes=1, ano=2025))  # Redireciona para um padrão se faltar dados
+        config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+        ano_base = config.ano_vigente if config else datetime.now().year
+        return redirect(url_for('mes', mes=1, ano=ano_base)) 
+
+    mes = int(mes)
+    ano = int(ano)
+
+    # Busca configuração do usuário para validar meses
+    configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    if not configuracao:
+        flash("Configuração do usuário não encontrada.", "warning")
+        return redirect(url_for('index'))
+
+    sinodal = configuracao.sinodal == "Sim"
+    mes_inicio = configuracao.mes_inicio_bienio if sinodal else 1
+    total_meses = 27 if sinodal else 12
+    ano_base = configuracao.ano_vigente
+
+    meses_validos = []
+    for i in range(total_meses):
+        m = ((mes_inicio - 1 + i) % 12) + 1
+        a = ano_base + ((mes_inicio - 1 + i) // 12)
+        meses_validos.append((m, a))
+
+    if (mes, ano) not in meses_validos:
+        flash("Mês fora do intervalo da gestão configurada.", "danger")
+        return redirect(url_for('mes', mes=mes, ano=ano))  # Redireciona para um padrão se faltar dados
 
     if request.method == 'POST':
-        # Converte a string de data para um objeto 'date'
         data_string = request.form['data']
-        lancamento.data = datetime.strptime(data_string, '%Y-%m-%d').date()
+        try:
+            nova_data = datetime.strptime(data_string, '%Y-%m-%d').date()
+        except ValueError:
+            flash("Data inválida.", "danger")
+            return redirect(url_for('editar_lancamento', id=id, mes=mes, ano=ano))
 
+        # Verifica se nova data está dentro dos meses válidos
+        if (nova_data.month, nova_data.year) not in meses_validos:
+            flash("Erro: A data informada está fora do intervalo da gestão.", "danger")
+            return redirect(url_for('editar_lancamento', id=id, mes=mes, ano=ano))
+
+        lancamento.data = nova_data
         lancamento.tipo = request.form['tipo']
         lancamento.descricao = request.form['descricao']
-        lancamento.valor = float(request.form['valor'])  # Converte valor para float
+
+        try:
+            lancamento.valor = float(request.form['valor'])
+        except ValueError:
+            flash("Valor inválido.", "danger")
+            return redirect(url_for('editar_lancamento', id=id, mes=mes, ano=ano))
+
+        if 'comprovante' in request.files:
+            file = request.files['comprovante']
+        
+            if file and allowed_file(file.filename):
+                if lancamento.comprovante:
+                comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(lancamento.comprovante))
+            
+                if os.path.exists(comprovante_path):
+                    os.remove(comprovante_path)
+                    print(f"Comprovante excluído: {comprovante_path}")
+                else:
+                    print(f"Arquivo não encontrado: {comprovante_path}")
+                    
+                filename = secure_filename(file.filename)
+                ext = os.path.splitext(filename)[1].lower()
+                base_name = os.path.splitext(filename)[0]
+        
+                while True:
+                    unique_id = uuid.uuid4().hex[:8]
+                    new_filename = f"{base_name}_{unique_id}{ext}"
+                    existing = Lancamento.query.filter_by(
+                        comprovante=os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                    ).first()
+                    if not existing:
+                        break
+        
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                file.save(file_path)
+        
+                # Reprocessa PNGs para evitar erro de entrelaçamento no FPDF
+                if ext == '.png':
+                    reprocessar_png_para_nao_interlaced(file_path)
+        
+                # Converte PDF para JPG (mantendo seu comportamento atual)
+                if ext == '.pdf':
+                    from pdf2image import convert_from_path
+                    images = convert_from_path(file_path)
+        
+                    if images:
+                        image_filename = new_filename.replace('.pdf', '.jpg')
+                        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+        
+                        images[0].save(image_path, 'JPEG')
+                        os.remove(file_path)
+        
+                        new_filename = image_filename
+                        file_path = image_path
+        
+                lancamento.comprovante = new_filename
 
         db.session.commit()  # Salva as alterações no banco
 
@@ -759,11 +967,8 @@ def editar_lancamento(id):
             lanc.id_lancamento = index
 
         db.session.commit()
-        # Após editar o lançamento, recalcular os saldos
-        mes = int(mes)  # Converte para inteiro
-        ano = int(ano)  # Converte para inteiro
         
-        propagar_recalculo_a_partir(mes_inicial=mes, ano=ano)
+        propagar_recalculo_a_partir(nova_data.month, nova_data.year)
 
         flash("Lançamento atualizado com sucesso!", "success")
         # Redireciona para a página do mês, passando 'mes' e 'ano' como parâmetros
@@ -779,87 +984,116 @@ def dados_relatorio(mes=None):
     dados = []
     saldo_anterior = 0
 
-    # Puxar dados de configuração (cabeçalho) para o usuário logado
     configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-    ano_vigente = configuracao.ano_vigente if configuracao else datetime.now().year  # Se não houver configuração, usa o ano atual
+    if not configuracao:
+        flash('Configuração não encontrada.', 'danger')
+        return []
 
-    # Puxar os dados de resumo para o usuário logado
+    ano_vigente = configuracao.ano_vigente
+    sinodal = configuracao.sinodal == 'Sim'
+    mes_inicio = configuracao.mes_inicio_bienio or 1
+
+    # Calcula datas para o intervalo da gestão
+    if sinodal:
+        data_inicio = datetime(ano_vigente, mes_inicio, 1)
+        data_fim = (data_inicio + relativedelta(months=27)) - timedelta(days=1)
+        meses_range = [(data_inicio + relativedelta(months=i)).month for i in range(27)]
+        anos_range = [(data_inicio + relativedelta(months=i)).year for i in range(27)]
+        datas_validas = [(m, a) for m, a in zip(meses_range, anos_range)]
+    else:
+        data_inicio = datetime(ano_vigente, 1, 1)
+        data_fim = datetime(ano_vigente, 12, 31)
+        datas_validas = [(m, ano_vigente) for m in range(1, 13)]
+
+    # Somatórios gerais
     outras_receitas = float(db.session.query(func.sum(Lancamento.valor)).filter(
         Lancamento.tipo == 'Outras Receitas',
-        extract('year', Lancamento.data) == ano_vigente,
+        tuple_(
+            extract('month', Lancamento.data),
+            extract('year', Lancamento.data)
+        ).in_(datas_validas),
         Lancamento.id_usuario == current_user.id
     ).scalar() or 0)
 
     aci_recebida = float(db.session.query(func.sum(Lancamento.valor)).filter(
         Lancamento.tipo == 'ACI Recebida',
-        extract('year', Lancamento.data) == ano_vigente,
+        tuple_(
+            extract('month', Lancamento.data),
+            extract('year', Lancamento.data)
+        ).in_(datas_validas),
         Lancamento.id_usuario == current_user.id
     ).scalar() or 0)
 
     outras_despesas = float(db.session.query(func.sum(Lancamento.valor)).filter(
         Lancamento.tipo == 'Outras Despesas',
-        extract('year', Lancamento.data) == ano_vigente,
+        tuple_(
+            extract('month', Lancamento.data),
+            extract('year', Lancamento.data)
+        ).in_(datas_validas),
         Lancamento.id_usuario == current_user.id
     ).scalar() or 0)
 
     aci_enviada = float(db.session.query(func.sum(Lancamento.valor)).filter(
         Lancamento.tipo == 'ACI Enviada',
-        extract('year', Lancamento.data) == ano_vigente,
+        tuple_(
+            extract('month', Lancamento.data),
+            extract('year', Lancamento.data)
+        ).in_(datas_validas),
         Lancamento.id_usuario == current_user.id
     ).scalar() or 0)
 
-    # Calcular total de receitas e despesas
+
     total_receitas = outras_receitas + aci_recebida
     total_despesas = outras_despesas + aci_enviada
-    saldo_final_ano = (configuracao.saldo_inicial or 0) + total_receitas - total_despesas if configuracao else total_receitas - total_despesas
+    saldo_final_ano = (configuracao.saldo_inicial or 0) + total_receitas - total_despesas
 
-    meses = range(1, 13) if mes is None else [mes]
+    # Definição de quais meses serão exibidos
+    if mes:
+        datas_validas = [d for d in datas_validas if d[0] == mes]
 
-    for mes_atual in meses:
-        saldo_inicial = saldo_anterior if mes_atual > 1 else float(configuracao.saldo_inicial or 0) if configuracao else 0
+    for mes_atual, ano_atual in datas_validas:
+        saldo_inicial = saldo_anterior if dados else float(configuracao.saldo_inicial or 0)
 
-        # Consultas para entradas e saídas para o usuário logado
         entradas = float(db.session.query(func.sum(Lancamento.valor)).filter(
             Lancamento.tipo.in_(['Outras Receitas', 'ACI Recebida']),
             extract('month', Lancamento.data) == mes_atual,
-            extract('year', Lancamento.data) == ano_vigente,
+            extract('year', Lancamento.data) == ano_atual,
             Lancamento.id_usuario == current_user.id
         ).scalar() or 0)
 
         saidas = float(db.session.query(func.sum(Lancamento.valor)).filter(
             Lancamento.tipo.in_(['Outras Despesas', 'ACI Enviada']),
             extract('month', Lancamento.data) == mes_atual,
-            extract('year', Lancamento.data) == ano_vigente,
+            extract('year', Lancamento.data) == ano_atual,
             Lancamento.id_usuario == current_user.id
         ).scalar() or 0)
 
         saldo_final = saldo_inicial + entradas - saidas
         saldo_anterior = saldo_final
 
-        # Lançamentos do mês para o usuário logado
         lancamentos = Lancamento.query.filter(
             extract('month', Lancamento.data) == mes_atual,
-            extract('year', Lancamento.data) == ano_vigente,
+            extract('year', Lancamento.data) == ano_atual,
             Lancamento.id_usuario == current_user.id
         ).order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()
 
-
         dados.append({
             'mes': mes_atual,
-            'saldo_inicial': formatar_moeda(saldo_inicial),  # Mantém como float
+            'ano': ano_atual,
+            'saldo_inicial': formatar_moeda(saldo_inicial),
             'entradas': formatar_moeda(entradas),
             'saidas': formatar_moeda(saidas),
             'saldo_final': formatar_moeda(saldo_final),
             'saldo_final_ano': formatar_moeda(saldo_final_ano),
             'lancamentos': lancamentos,
-            'configuracao': configuracao,  # Adicionando a configuração no dicionário
+            'configuracao': configuracao,
             'outras_receitas': formatar_moeda(outras_receitas),
             'aci_recebida': formatar_moeda(aci_recebida),
             'outras_despesas': formatar_moeda(outras_despesas),
             'aci_enviada': formatar_moeda(aci_enviada),
             'total_receitas': formatar_moeda(total_receitas),
             'total_despesas': formatar_moeda(total_despesas),
-            'ano_vigente': ano_vigente  # Adiciona o ano vigente aos dados
+            'ano_vigente': ano_vigente
         })
 
     return dados
@@ -911,8 +1145,14 @@ def exportar_relatorio():
     # Título do relatório centralizado
     pdf.set_text_color(28, 30, 62)  # Azul Escuro
     pdf.set_font("Arial", style='B', size=14)
-    pdf.cell(190, 10, txt=f"RELATÓRIO FINANCEIRO {ano}{f' - Mês {mes}' if mes else ''}", ln=True, align='C')
-    pdf.ln(0)  # Espaço antes do próximo título
+    # Condicional para exibir o título corretamente
+    if dados_config.sinodal == 'Sim':
+        titulo = f"RELATÓRIO FINANCEIRO {ano} - {ano + 2}{f' - Mês {mes}' if mes else ''}"
+    else:
+        titulo = f"RELATÓRIO FINANCEIRO {ano}{f' - Mês {mes}' if mes else ''}"
+
+    pdf.cell(190, 10, txt=titulo, ln=True, align='C')
+    pdf.ln(0)
 
     # Título com Nome da UMP/Federação centralizado
     pdf.set_font("Arial", style='B', size=12)
@@ -964,11 +1204,16 @@ def exportar_relatorio():
         valor_cooperadores = str(dados_config.socios_cooperadores if hasattr(dados_config, 'socios_cooperadores') else "Não definido")
 
 
-    # Lista de campos com os rótulos e valores definidos
+    # Cálculo do ano da gestão com base na condição sinodal
+    if hasattr(dados_config, 'sinodal') and dados_config.sinodal == 'Sim':
+        gestao = f"{dados_config.ano_vigente}/{dados_config.ano_vigente + 2}"
+    else:
+        gestao = str(dados_config.ano_vigente if hasattr(dados_config, 'ano_vigente') else "Não definido")
+
     campos = [
         (label_sinodal, dados_config.ump_federacao if hasattr(dados_config, 'ump_federacao') else "Não definido"),
         (label_federacao, dados_config.federacao_sinodo if hasattr(dados_config, 'federacao_sinodo') else "Não definido"),
-        ("Ano Vigente:", str(dados_config.ano_vigente if hasattr(dados_config, 'ano_vigente') else "Não definido")),
+        ("Gestão:", gestao),
         (label_ativos, str(dados_config.socios_ativos if hasattr(dados_config, 'socios_ativos') else "Não definido")),
         (label_cooperadores, valor_cooperadores),
     ]
@@ -1175,7 +1420,7 @@ def exportar_relatorio():
         mes_nome = meses.get(d['mes'], f"Mês {d['mes']}")  # Obtém o nome do mês
         pdf.set_text_color(28, 30, 62)  # Azul Escuro
         pdf.set_font("Arial", style='B', size=12)
-        pdf.cell(190, 10, txt=f"Mês {d['mes']} - {mes_nome} {ano}", ln=True, align='C')
+        pdf.cell(190, 10, txt=f"{mes_nome} {d['ano']}", ln=True, align='C')
         pdf.ln(5)
 
         # Tabela de saldos
@@ -1824,20 +2069,27 @@ def excluir_todos_lancamentos():
 
             db.session.commit()
 
-            # Recalcula saldos do ano vigente
+            # Recarrega configurações
             configuracao = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-            ano_vigente = configuracao.ano_vigente if configuracao else datetime.now().year
+            if not configuracao:
+                flash("Erro: Configuração não encontrada.", "danger")
+                return redirect(url_for('index'))
+
+            ano_base = configuracao.ano_vigente
+            sinodal = configuracao.sinodal == "Sim"
+            mes_inicio = configuracao.mes_inicio_bienio if sinodal else 1
+            total_meses = 27 if sinodal else 12
 
             # Remove todos os saldos antigos
             SaldoFinal.query.filter_by(id_usuario=current_user.id).delete()
             db.session.commit()
 
-            # Salva saldo de janeiro com base no configurado
-            saldo_janeiro = configuracao.saldo_inicial or 0
-            salvar_saldo_final(1, ano_vigente, saldo_janeiro)
+            # Recria saldo inicial no mês/ano de início da gestão
+            saldo_inicial = configuracao.saldo_inicial or 0
+            salvar_saldo_final(mes_inicio, ano_base, saldo_inicial)
 
-            # Propaga os saldos a partir de janeiro
-            propagar_recalculo_a_partir(mes_inicial=1, ano=ano_vigente)
+            # Propaga saldos a partir do mês/ano inicial da gestão
+            propagar_recalculo_a_partir(mes_inicial=mes_inicio, ano_base=ano_base)
 
             flash('Todos os lançamentos e comprovantes foram excluídos com sucesso!', 'success')
 
