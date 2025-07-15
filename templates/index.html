@@ -22,7 +22,18 @@
                 {% endif %}
             </div>
             <div class="flex items-center space-x-4">
-                <span class="text-sm text-gray-600">Ano: <span class="font-medium">{{ config.ano_vigente if config else 'N/A' }}</span></span>
+                <span class="text-sm text-gray-600">
+                    Gestão: 
+                    <span class="font-medium">
+                        {% if config and config.sinodal == 'Sim' %}
+                            {{ config.ano_vigente }}/{{ config.ano_vigente + 2 }}
+                        {% elif config %}
+                            {{ config.ano_vigente }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                </span>
                 {% if config and config.gestor == 'Sim' %}
                     <a href="{{ url_for('admin_consultar') }}" class="flex items-center justify-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
                         <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
