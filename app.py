@@ -914,7 +914,7 @@ def editar_lancamento(id):
         
             if file and allowed_file(file.filename):
                 if lancamento.comprovante:
-                comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(lancamento.comprovante))
+                    comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(lancamento.comprovante))
             
                 if os.path.exists(comprovante_path):
                     os.remove(comprovante_path)
