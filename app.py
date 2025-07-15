@@ -16,7 +16,7 @@ import requests
 from dotenv import load_dotenv
 from collections import defaultdict
 from sqlalchemy.orm import aliased, joinedload
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from formatador import formatar_moeda
 import uuid
 import math
