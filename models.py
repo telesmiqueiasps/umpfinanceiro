@@ -22,6 +22,7 @@ class Configuracao(db.Model):
     saldo_inicial = db.Column(db.Float, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     ultimo_id_lancamento = db.Column(db.Integer, default=0)
+    mes_inicio_bienio = db.Column(db.Integer, nullable=False)
 
 
 
