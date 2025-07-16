@@ -1493,19 +1493,8 @@ def validar_assinatura(hash_assinatura):
 
 
 def buscar_lancamentos(ano=None, mes=None):
-    """Retorna os lançamentos filtrados por ano, mês e usuário logado."""
-    query = Lancamento.query  # Começa a consulta no banco
-
-    # Filtra sempre pelo usuário logado
-    query = query.filter(Lancamento.id_usuario == current_user.id)
-
-    if ano:
-        query = query.filter(extract('year', Lancamento.data) == ano)  # Filtra pelo ano
-
-    if mes:
-        query = query.filter(extract('month', Lancamento.data) == mes)  # Filtra pelo mês
-
-    return query.order_by(Lancamento.data.asc(), Lancamento.id.asc()).all()  # Retorna os lançamentos filtrados
+    lancamentos = Lancamento.query.filter(Lancamento.id_usuario == current_user.id).all()
+    return lancamentos
 
 
 @app.route('/exportar-comprovantes')
@@ -1518,53 +1507,119 @@ def exportar_comprovantes():
     dados_config = dados[0].get('configuracao', {}) if dados else {}
 
     # Buscar lançamentos do período (já ajustado para o usuário logado)
-    lancamentos = buscar_lancamentos(ano, mes)
+    lancamentos = buscar_lancamentos()
+    config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
 
-    # Adicionar título
-    pdf.set_text_color(28, 30, 62)  # Azul Escuro
-    pdf.set_font("Arial", style='B', size=14)
-    pdf.cell(190, 10, f"RELATÓRIO DE COMPROVANTES - {ano if ano else 'Todos'} {f'Mês {mes}' if mes else ''}", ln=True, align='C')
-    pdf.ln(0)
+    # Paleta de cores
+    verde_agua = (180, 230, 220)
+    azul_escuro = (28, 30, 62)
+    cinza_claro = (240, 240, 240)
+    cinza_medio = (120, 120, 120)
 
-    # Título com Nome da UMP/Federação centralizado
-    pdf.set_font("Arial", style='B', size=12)
-    campo = f"{dados_config.ump_federacao if hasattr(dados_config, 'ump_federacao') else 'Não definido'} - {dados_config.federacao_sinodo if hasattr(dados_config, 'federacao_sinodo') else 'Não definido'}"
-    pdf.cell(190, 10, campo, ln=True, align='C')
-    pdf.ln(10)  # Espaço após a linha
+    # --- Fundo do topo (faixa verde) ---
+    pdf.set_fill_color(*verde_agua)
+    pdf.rect(0, 0, 210, 40, style='F')
 
-    # === Relação de Comprovantes ===
-    pdf.set_text_color(255, 255, 255)  # Cor branca
-    pdf.set_font("Arial", style='B', size=14)
-    pdf.set_fill_color(28, 30, 62)  # Azul
-    pdf.cell(190, 8, txt="Relação de Comprovantes", ln=True, align='C', fill=True)
-    pdf.ln(5)
+    # --- Logo centralizado ---
+    logo_path = os.path.join(app.static_folder, "Logos/logo_sinodal 02.png")
+    try:
+        pdf.image(logo_path, x=80, y=10, w=50)
+    except:
+        pdf.set_text_color(*azul_escuro)
+        pdf.set_font("Helvetica", style='B', size=12)
+        pdf.text(90, 25, "[LOGO]")
 
-    # Criar a tabela de lançamentos
-    pdf.set_text_color(28, 30, 62)  # Azul Escuro
-    pdf.set_font("Arial", style='B', size=10)
-    pdf.cell(15, 10, "Cód.", border=1, align='C')
-    pdf.cell(30, 10, "Data", border=1, align='C')
-    pdf.cell(80, 10, "Descrição", border=1, align='C')
-    pdf.cell(30, 10, "Valor", border=1, align='C')
-    pdf.cell(35, 10, "Comprovante", border=1, align='C')
-    pdf.ln()
+    pdf.ln(45)  # Espaço após logo/faixa
 
-    pdf.set_font("Arial", size=10)
+    # --- Bloco do Título ---
+    pdf.set_fill_color(*azul_escuro)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", style='B', size=16)
+    pdf.cell(190, 12, "RELATÓRIO DE COMPROVANTES", ln=True, align='C', fill=True)
+    pdf.ln(8)
 
-    for lanc in lancamentos:
-        pdf.cell(15, 10, str(lanc.id_lancamento), border=1, align='C')
-        pdf.cell(30, 10, txt=lanc.data.strftime('%d/%m/%Y'), border=1, align='C')
-        pdf.cell(80, 10, lanc.descricao, border=1, align='L')
-        pdf.cell(30, 10, f"R$ {lanc.valor:.2f}", border=1, align='C')
-        pdf.cell(35, 10, "Anexado" if lanc.comprovante else "Não anexado", border=1, align='C')
-        pdf.ln()
+    # --- Dados dinâmicos ---
+    config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
+    sinodal = config.sinodal == 'Sim' if config else False
+    titulo_ano = f"{ano}/{ano + 2}" if sinodal else str(ano)
+
+    ump_federacao = config.ump_federacao if config and hasattr(config, 'ump_federacao') else "Não definido"
+    federacao_sinodo = config.federacao_sinodo if config and hasattr(config, 'federacao_sinodo') else "Não definido"
+    tesoureiro = config.tesoureiro_responsavel if config and hasattr(config, 'tesoureiro_responsavel') else "Não definido"
+    presidente = config.presidente_responsavel if config and hasattr(config, 'presidente_responsavel') else "Não definido"
+
+    # --- Bloco da organização ---
+    pdf.set_fill_color(*cinza_claro)
+    pdf.set_text_color(*azul_escuro)
+    pdf.set_font("Helvetica", style='B', size=14)
+    pdf.cell(190, 10, f"{ump_federacao} - {federacao_sinodo}", ln=True, align='C', fill=True)
+    pdf.ln(4)
+
+    # --- Gestão ---
+    pdf.set_text_color(*azul_escuro)
+    pdf.set_font("Helvetica", style='B', size=14)
+    pdf.cell(190, 8, f"{titulo_ano}", ln=True, align='C')
+    pdf.ln(15)
+
+    # --- RESPONSÁVEIS EM FORMATO DE TABELA --- 
+    verde_agua = (180, 230, 220)
+    azul_escuro = (28, 30, 62)
 
     pdf.ln(10)
+    y_responsaveis = pdf.get_y()
+
+    def bloco_responsavel(titulo, nome, x_pos):
+        largura = 80
+        altura_total = 24
+        altura_titulo = 10
+        altura_nome = altura_total - altura_titulo
+
+        # Borda externa
+        pdf.set_draw_color(*azul_escuro)
+        pdf.rect(x_pos, y_responsaveis, largura, altura_total)
+
+        # Título
+        pdf.set_xy(x_pos, y_responsaveis)
+        pdf.set_fill_color(255, 255, 255)
+        pdf.set_text_color(*azul_escuro)
+        pdf.set_font("Helvetica", style='B', size=10)
+        pdf.cell(largura, altura_titulo, titulo, border=0, ln=True, align='C', fill=True)
+
+        # Nome no fundo verde-água
+        pdf.set_xy(x_pos, y_responsaveis + altura_titulo)
+        pdf.set_fill_color(*verde_agua)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Helvetica", style='', size=10)
+        nome_formatado = nome.upper() if nome else 'NÃO DEFINIDO'
+        pdf.cell(largura, altura_nome, nome_formatado, border=0, ln=True, align='C', fill=True)
+
+    # Dados reais
+    tesoureiro = dados_config.tesoureiro_responsavel if hasattr(dados_config, 'tesoureiro_responsavel') else ''
+    presidente = dados_config.presidente_responsavel if hasattr(dados_config, 'presidente_responsavel') else ''
+
+    # Inserir blocos lado a lado
+    bloco_responsavel("TESOUREIRO RESPONSÁVEL", tesoureiro, 25)
+    bloco_responsavel("PRESIDENTE RESPONSÁVEL", presidente, 110)
+
+    # Avança Y após os dois blocos
+    pdf.set_y(y_responsaveis + 30)
+
+
+
+    # --- Linha decorativa com quebra ---
+    pdf.set_draw_color(*cinza_medio)
+    pdf.line(25, pdf.get_y(), 185, pdf.get_y())
+    pdf.ln(5)
+
+    # --- Rodapé com data e sistema ---
+    pdf.set_y(275)
+    pdf.set_text_color(100, 100, 100)
+    pdf.set_font("Helvetica", style='I', size=8)
+    pdf.cell(190, 5, f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')} pelo sistema UMP Financeiro", ln=True, align='C')
 
     # Adicionar os comprovantes ao PDF
     for lanc in lancamentos:
@@ -1572,36 +1627,83 @@ def exportar_comprovantes():
             # Construir o caminho completo do comprovante
             comprovante_path = os.path.join(app.config['UPLOAD_FOLDER'], lanc.comprovante) if not os.path.isabs(lanc.comprovante) else lanc.comprovante
 
-            print(f"Comprovante Path: {comprovante_path}")  # Para debug
-
             # Verifique se o arquivo existe e é uma imagem
             if os.path.exists(comprovante_path):
                 file_extension = comprovante_path.lower().split('.')[-1]
                 if file_extension in ['jpg', 'jpeg', 'png']:
                     try:
                         pdf.add_page()
-                        pdf.set_font("Arial", style='B', size=12)
-                        pdf.cell(190, 10, f"Comprovante - Cód. {lanc.id_lancamento}", ln=True, align='C')
-                        pdf.ln(5)
 
-                        # Carregar a imagem para obter as dimensões
+                        # === CABEÇALHO ELEGANTE ===
+                        # Fundo colorido para cabeçalho
+                        pdf.set_fill_color(28, 30, 62)
+                        pdf.rect(10, 10, 190, 15, style='F')
+                        
+                        # Texto do cabeçalho
+                        pdf.set_text_color(255, 255, 255)  # Branco
+                        pdf.set_font("Helvetica", style='B', size=12)
+                        federacao = dados_config.ump_federacao if hasattr(dados_config, 'ump_federacao') else 'Não definido'
+                        sinodo = dados_config.federacao_sinodo if hasattr(dados_config, 'federacao_sinodo') else 'Não definido'
+                        pdf.cell(190, 15, f"{federacao} - {sinodo}", ln=True, align='C', border=0)
+                        
+                        # Divisor decorativo
+                        pdf.set_draw_color(150, 150, 150)
+                        pdf.line(20, 30, 190, 30)
+                        pdf.ln(10)
+
+                        # === TÍTULO DO COMPROVANTE ===
+                        pdf.set_text_color(28, 30, 62)  # Azul escuro
+                        pdf.set_font("Helvetica", style='B', size=14)
+                        pdf.cell(190, 10, f"COMPROVANTE - CÓD. {lanc.id_lancamento}", ln=True, align='C')
+                        
+                        # Badge para a data
+                        pdf.set_fill_color(240, 240, 240)
+                        pdf.set_text_color(80, 80, 80)
+                        pdf.set_font("Helvetica", style='B', size=9)
+                        pdf.cell(190, 8, f"Data: {lanc.data.strftime('%d/%m/%Y')} ", ln=False, align='C', fill=True, border=0)
+                        pdf.ln(8)
+
+                        # === DESCRIÇÃO DESTACADA ===
+                        pdf.set_text_color(60, 60, 60)
+                        pdf.set_font("Helvetica", style='I', size=10)
+                        pdf.multi_cell(190, 6, f"Descrição: {lanc.descricao}", align='C')
+                        pdf.ln(4)
+
+                        # === VALOR COM DESTAQUE ===
+                        valor_formatado = f"R$ {lanc.valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        pdf.set_text_color(0, 100, 0)  # Verde escuro
+                        pdf.set_font("Helvetica", style='B', size=16)
+                        pdf.cell(190, 12, valor_formatado, ln=True, align='C')
+                        pdf.ln(8)
+
+                        # === IMAGEM COM MOLDURA ===
                         image = Image.open(comprovante_path)
                         img_width, img_height = image.size
 
-                        # Definir a largura máxima disponível no PDF
-                        max_width = 190
-                        max_height = 250  # Ajuste conforme necessário para não sobrepor outras informações
+                        max_width = 160  # Reduzido para deixar margens
+                        max_height = 180
 
-                        # Calcular o novo tamanho proporcionalmente
                         ratio = min(max_width / img_width, max_height / img_height)
                         new_width = img_width * ratio
                         new_height = img_height * ratio
 
-                        # Adicionar a imagem redimensionada ao PDF
-                        pdf.image(comprovante_path, x=10, y=30, w=new_width, h=new_height)
+                        # Moldura sutil
+                        pdf.set_draw_color(200, 200, 200)
+                        pdf.rect((210 - new_width)/2 - 2, pdf.get_y() - 2, new_width + 4, new_height + 4)
+                        
+                        # Imagem centralizada
+                        pdf.image(comprovante_path, 
+                                x=(210 - new_width)/2, 
+                                y=pdf.get_y(), 
+                                w=new_width, 
+                                h=new_height)
 
                     except Exception as e:
-                        pdf.cell(190, 10, f"Erro ao carregar imagem: {str(e)}", ln=True, align='C')
+                        # Mensagem de erro estilizada
+                        pdf.set_fill_color(255, 230, 230)
+                        pdf.set_text_color(200, 0, 0)
+                        pdf.set_font("Helvetica", style='B', size=10)
+                        pdf.cell(190, 10, f" ERRO: {str(e)} ", ln=True, align='C', fill=True)
                 else:
                     pdf.add_page()
                     pdf.set_font("Arial", style='B', size=12)
