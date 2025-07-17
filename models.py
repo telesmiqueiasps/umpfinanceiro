@@ -150,3 +150,11 @@ class AssinaturaRelatorio(db.Model):
 
     def __repr__(self):
         return f'<AssinaturaRelatorio {self.hash[:8]}... - {self.mes}/{self.ano}>'
+
+class Observacao(db.Model):
+    __tablename__ = 'observacao'
+    id = db.Column(db.Integer, primary_key=True)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'), unique=True, nullable=False)
+    texto = db.Column(db.Text, nullable=True)
+
+    usuario = db.relationship('Usuario', backref=db.backref('observacao', uselist=False))
