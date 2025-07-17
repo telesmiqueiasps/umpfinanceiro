@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-6 mx-auto max-w-3xl p-4 bg-white shadow-md rounded-lg">
+
+    <!-- Botão de Voltar -->
+    <div class="flex justify-end mb-4">
+        <a href="{{ url_for('relatorio') }}" class="flex items-center bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Voltar
+        </a>
+    </div>
+
+
+    <h2 class="text-2xl font-semibold text-blue-800 mb-4">Minhas Observações</h2>
+
+    <form method="POST">
+        <div class="mb-4">
+            <label for="texto" class="block text-sm font-medium text-gray-700 mb-2">Digite sua observação (máx. 150 palavras):</label>
+            <textarea name="texto" id="texto" class="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200 resize-none" rows="10" maxlength="2000" required>{{ observacao }}</textarea>
+            <small id="contador" class="text-gray-600 block mt-2">0/150 palavras</small>
+        </div>
+
+        <!-- Botão Salvar -->
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200 shadow-md">
+            Salvar
+        </button>
+    </form>
+</div>
+
+<!-- Contador de Palavras -->
+<script>
+    const textarea = document.getElementById('texto');
+    const contador = document.getElementById('contador');
+
+    function contarPalavras(text) {
+        return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    }
+
+    textarea.addEventListener('input', () => {
+        const palavras = contarPalavras(textarea.value);
+        contador.textContent = `${palavras}/150 palavras`;
+        contador.style.color = palavras > 150 ? 'red' : '';
+    });
+
+    contador.textContent = `${contarPalavras(textarea.value)}/150 palavras`;
+</script>
+
+<!-- Modal de Feedback -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            {% if category in ['success', 'danger'] %}
+                <div id="{{ category }}-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50">
+                    <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full border border-gray-200 animate-fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold {% if category == 'success' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if category == 'success' %}Sucesso!{% else %}Erro!{% endif %}
+                            </h2>
+                            <button onclick="document.getElementById('{{ category }}-modal').style.display='none'" class="text-gray-500 hover:text-gray-400">×</button>
+                        </div>
+                        <p class="text-gray-700 text-sm">{{ message }}</p>
+                        <div class="mt-4 flex justify-end">
+                            <a href="{{ url_for('observacao') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                Ok
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(() => {
+                        document.getElementById('{{ category }}-modal').style.display = 'flex';
+                    }, 200);
+                </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
