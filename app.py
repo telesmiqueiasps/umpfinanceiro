@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory, render_template, g, request, redirect, url_for, flash, send_file, make_response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
-from models import db, Configuracao, Financeiro, Lancamento, SaldoFinal, Usuario, Socio, Mensalidade, AciValorAno, AciPagamento, SuporteMensagem, AssinaturaRelatorio
+from models import db, Configuracao, Financeiro, Lancamento, SaldoFinal, Usuario, Socio, Mensalidade, AciValorAno, AciPagamento, SuporteMensagem, AssinaturaRelatorio, Observacao
 from datetime import datetime
 import os, sqlite3, locale
 from io import BytesIO
@@ -27,7 +27,7 @@ from urllib.parse import quote_plus
 from supabase import create_client
 from hashlib import sha256
 from dateutil.relativedelta import relativedelta
-
+import unicodedata
 
 
 
@@ -1510,116 +1510,91 @@ def exportar_comprovantes():
     lancamentos = buscar_lancamentos()
     config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
 
+    observacao = Observacao.query.filter_by(id_usuario=current_user.id).first()
+    texto_observacao = observacao.texto if observacao else "Nenhuma observação registrada."
+
+
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
+    pdf.set_font("Arial", size=12)
 
-    # Paleta de cores
-    verde_agua = (180, 230, 220)
-    azul_escuro = (28, 30, 62)
-    cinza_claro = (240, 240, 240)
-    cinza_medio = (120, 120, 120)
+    dados_config = dados[0].get('configuracao', {}) if dados else {}
 
-    # --- Fundo do topo (faixa verde) ---
-    pdf.set_fill_color(*verde_agua)
-    pdf.rect(0, 0, 210, 40, style='F')
-
-    # --- Logo centralizado ---
     logo_path = os.path.join(app.static_folder, "Logos/logo_sinodal 02.png")
     try:
-        pdf.image(logo_path, x=80, y=10, w=50)
+        pdf.image(logo_path, x=80, y=8, w=50) 
     except:
-        pdf.set_text_color(*azul_escuro)
-        pdf.set_font("Helvetica", style='B', size=12)
-        pdf.text(90, 25, "[LOGO]")
+        pass  
 
-    pdf.ln(45)  # Espaço após logo/faixa
+    pdf.ln(26)  
 
-    # --- Bloco do Título ---
-    pdf.set_fill_color(*azul_escuro)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", style='B', size=16)
-    pdf.cell(190, 12, "RELATÓRIO DE COMPROVANTES", ln=True, align='C', fill=True)
-    pdf.ln(8)
+    pdf.set_text_color(28, 30, 62)  
+    pdf.set_font("Arial", style='B', size=14)
 
-    # --- Dados dinâmicos ---
+    # Condicional para exibir o título corretamente
+    if dados_config.sinodal == 'Sim':
+        titulo = f"RELATÓRIO DE COMPROVANTES {ano} - {ano + 2}{f' - Mês {mes}' if mes else ''}"
+    else:
+        titulo = f"RELATÓRIO DE COMPROVATES {ano}{f' - Mês {mes}' if mes else ''}"
+
+    pdf.cell(190, 10, txt=titulo, ln=True, align='C')
+    pdf.ln(0)
+
+    pdf.set_font("Arial", style='B', size=12)
+    campo = f"{dados_config.ump_federacao if hasattr(dados_config, 'ump_federacao') else 'Não definido'} - {dados_config.federacao_sinodo if hasattr(dados_config, 'federacao_sinodo') else 'Não definido'}"
+    pdf.cell(190, 10, campo, ln=True, align='C')
+    pdf.ln(5)
+
+    # === INFORMAÇÕES TESOUREIRO E PRESIDENTE ===
+    pdf.set_text_color(255, 255, 255)  
+    pdf.set_font("Arial", style='B', size=14)
+    pdf.set_fill_color(28, 30, 62) 
+    pdf.cell(190, 8, txt="Responsáveis", ln=True, align='C', fill=True)
+    pdf.ln(2)
+
+    largura_campo = 95
+    largura_valor = 95
+    altura_celula = 8
+
     config = Configuracao.query.filter_by(id_usuario=current_user.id).first()
-    sinodal = config.sinodal == 'Sim' if config else False
-    titulo_ano = f"{ano}/{ano + 2}" if sinodal else str(ano)
-
-    ump_federacao = config.ump_federacao if config and hasattr(config, 'ump_federacao') else "Não definido"
-    federacao_sinodo = config.federacao_sinodo if config and hasattr(config, 'federacao_sinodo') else "Não definido"
     tesoureiro = config.tesoureiro_responsavel if config and hasattr(config, 'tesoureiro_responsavel') else "Não definido"
     presidente = config.presidente_responsavel if config and hasattr(config, 'presidente_responsavel') else "Não definido"
 
-    # --- Bloco da organização ---
-    pdf.set_fill_color(*cinza_claro)
-    pdf.set_text_color(*azul_escuro)
-    pdf.set_font("Helvetica", style='B', size=14)
-    pdf.cell(190, 10, f"{ump_federacao} - {federacao_sinodo}", ln=True, align='C', fill=True)
-    pdf.ln(4)
 
-    # --- Gestão ---
-    pdf.set_text_color(*azul_escuro)
-    pdf.set_font("Helvetica", style='B', size=14)
-    pdf.cell(190, 8, f"{titulo_ano}", ln=True, align='C')
-    pdf.ln(15)
+    pdf.set_text_color(28, 30, 62)  
+    pdf.set_font("Arial", style='B', size=11)
+    pdf.set_fill_color(201, 203, 231)  
+    pdf.cell(largura_campo, altura_celula, "Tesoureiro", border=1, align='C', fill=True)
+    pdf.cell(largura_valor, altura_celula, "Presidente", border=1, align='C', fill=True)
+    pdf.ln()
 
-    # --- RESPONSÁVEIS EM FORMATO DE TABELA --- 
-    verde_agua = (180, 230, 220)
-    azul_escuro = (28, 30, 62)
+    pdf.set_text_color(0, 0, 0)  
+    pdf.set_font("Arial", size=11)
+    pdf.cell(largura_campo, altura_celula, tesoureiro, border=1, align='C')
+    pdf.cell(largura_valor, altura_celula, presidente, border=1, align='C')
+    pdf.ln(12)
 
-    pdf.ln(10)
-    y_responsaveis = pdf.get_y()
+    # === Obeservações === 
 
-    def bloco_responsavel(titulo, nome, x_pos):
-        largura = 80
-        altura_total = 24
-        altura_titulo = 10
-        altura_nome = altura_total - altura_titulo
+    pdf.set_text_color(28, 30, 62)  
+    pdf.set_font("Arial", style='B', size=11)
+    pdf.set_fill_color(180, 230, 220)
 
-        # Borda externa
-        pdf.set_draw_color(*azul_escuro)
-        pdf.rect(x_pos, y_responsaveis, largura, altura_total)
+    pdf.cell(190, 10, "Observações do Relatório", ln=True, border='LTR', align='C', fill=True)
 
-        # Título
-        pdf.set_xy(x_pos, y_responsaveis)
-        pdf.set_fill_color(255, 255, 255)
-        pdf.set_text_color(*azul_escuro)
-        pdf.set_font("Helvetica", style='B', size=10)
-        pdf.cell(largura, altura_titulo, titulo, border=0, ln=True, align='C', fill=True)
+    pdf.set_font("Arial", size=10)
+    pdf.set_text_color(0, 0, 0)
 
-        # Nome no fundo verde-água
-        pdf.set_xy(x_pos, y_responsaveis + altura_titulo)
-        pdf.set_fill_color(*verde_agua)
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font("Helvetica", style='', size=10)
-        nome_formatado = nome.upper() if nome else 'NÃO DEFINIDO'
-        pdf.cell(largura, altura_nome, nome_formatado, border=0, ln=True, align='C', fill=True)
-
-    # Dados reais
-    tesoureiro = dados_config.tesoureiro_responsavel if hasattr(dados_config, 'tesoureiro_responsavel') else ''
-    presidente = dados_config.presidente_responsavel if hasattr(dados_config, 'presidente_responsavel') else ''
-
-    # Inserir blocos lado a lado
-    bloco_responsavel("TESOUREIRO RESPONSÁVEL", tesoureiro, 25)
-    bloco_responsavel("PRESIDENTE RESPONSÁVEL", presidente, 110)
-
-    # Avança Y após os dois blocos
-    pdf.set_y(y_responsaveis + 30)
-
-
-
-    # --- Linha decorativa com quebra ---
-    pdf.set_draw_color(*cinza_medio)
-    pdf.line(25, pdf.get_y(), 185, pdf.get_y())
-    pdf.ln(5)
+    texto_observacao = sanitize_text(texto_observacao)
+    pdf.multi_cell(190, 8, texto_observacao, border='LR', align='L')
+    pdf.cell(190, 2, '', ln=True, border='T')
 
     # --- Rodapé com data e sistema ---
     pdf.set_y(275)
     pdf.set_text_color(100, 100, 100)
     pdf.set_font("Helvetica", style='I', size=8)
-    pdf.cell(190, 5, f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')} pelo sistema UMP Financeiro", ln=True, align='C')
+    pdf.cell(190, 5, f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')} - UMP Financeiro", ln=True, align='C')
 
     # Adicionar os comprovantes ao PDF
     for lanc in lancamentos:
@@ -3061,6 +3036,36 @@ def excluir_arquivo(pasta, nome):
         flash("Arquivo não encontrado!", "danger")
 
     return redirect(url_for('listar_arquivos', pasta=pasta))
+
+
+def sanitize_text(text):
+    # Remove caracteres incompatíveis com 'latin-1'
+    return unicodedata.normalize('NFKD', text).encode('latin-1', 'ignore').decode('latin-1')    
+
+
+@app.route('/observacao', methods=['GET', 'POST'])
+@login_required
+def observacao():
+    obs = Observacao.query.filter_by(id_usuario=current_user.id).first()
+
+    if request.method == 'POST':
+        texto = request.form.get('texto', '').strip()
+        palavras = len(texto.split())
+
+        if palavras > 150:
+            flash('O texto excede o limite de 150 palavras.', 'danger')
+        else:
+            if not obs:
+                obs = Observacao(id_usuario=current_user.id, texto=texto)
+                db.session.add(obs)
+            else:
+                obs.texto = texto
+
+            db.session.commit()
+            flash('Observação salva com sucesso!', 'success')
+            return redirect(url_for('observacao'))
+
+    return render_template('observacao.html', observacao=obs.texto if obs else '')
 
 
 if __name__ == "__main__":
