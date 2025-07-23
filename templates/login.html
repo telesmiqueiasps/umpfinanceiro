@@ -10,7 +10,6 @@
 </head>
 
 <body class="min-h-screen bg-gray-100 flex flex-col overflow-hidden relative" style="font-family: 'Inter', sans-serif; background-color: #E6ECEF;">
-    <!-- Ondas Gradientes no Fundo -->
     <div class="absolute inset-0 z-0">
         <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path class="wave-1" d="M0 400C240 300 480 500 720 400C960 300 1200 500 1440 400V800H0V400Z" fill="url(#waveGradient)" fill-opacity="0.2"/>
@@ -24,31 +23,25 @@
         </svg>
     </div>
 
-    <!-- Barra Superior -->
     <div class="w-full bg-white py-6 shadow-md fixed top-0 z-20 border-b border-gray-200">
         <h1 class="text-3xl font-semibold text-blue-600 text-center tracking-tight">
             UMP Financeiro
         </h1>
     </div>
 
-    <!-- Conteúdo Centralizado -->
     <div class="flex-1 flex items-center justify-center mt-24 px-4 z-10">
         <!-- Caixa de Login -->
         <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-6 border border-gray-200">
   
-            <!-- Seção da Logo -->
             <div class="flex-shrink-0">
                 <img src="{{ url_for('static', filename='Logos/logo_sinodal 01.png') }}" alt="Logo UMP" class="h-24 w-auto animate-pulse-slow">
             </div>
   
-            <!-- Seção do Formulário -->
             <div class="flex-1">
-                <!-- Título Login -->
                 <h2 class="text-xl font-medium text-blue-600 mb-4 text-center md:text-left">
                     Login
                 </h2>
   
-                <!-- Exibição de mensagens de erro -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-lg text-red-600 animate-fade-in text-sm">
@@ -60,10 +53,8 @@
                         </div>
                     {% endif %}
                 {% endwith %}
-  
-                <!-- Formulário -->
+
                 <form action="{{ url_for('login') }}" method="POST" class="space-y-4" autocomplete="off">
-                    <!-- Campo Username -->
                     <div class="relative">
                         <label for="username" class="block text-sm font-medium text-gray-600 mb-1">Usuário</label>
                         <input type="text" id="username" name="username" required autocomplete="username"
@@ -76,7 +67,6 @@
                         </span>
                     </div>
 
-                    <!-- Campo Senha -->
                     <div class="relative">
                         <label for="senha" class="block text-sm font-medium text-gray-600 mb-1">Senha</label>
                         <input type="password" id="senha" name="senha" required autocomplete="new-password"
@@ -89,7 +79,6 @@
                         </span>
                     </div>
 
-                    <!-- Botão Entrar -->
                     <button type="submit"
                         class="w-full bg-blue-600 text-white py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 flex items-center justify-center">
                         Entrar
@@ -99,14 +88,12 @@
                     </button>
                 </form>
   
-                <!-- Link para Recuperação de Senha -->
                 <div class="mt-4 text-center md:text-left">
                     <a href="{{ url_for('recuperar_senha') }}" class="text-sm text-blue-600 hover:underline transition-colors duration-200">
                         Esqueceu sua senha?
                     </a>
                 </div>
   
-                <!-- Créditos -->
                 <div class="mt-6 text-center md:text-left text-gray-400 text-xs">
                     Desenvolvido por: Miquéias Teles • © 2025
                 </div>
@@ -114,8 +101,6 @@
         </div>
     </div>
 
-
-    <!-- Estilos -->
     <style>
         /* Animação de entrada */
         @keyframes fadeIn {
@@ -125,7 +110,6 @@
         .animate-fade-in {
             animation: fadeIn 0.6s ease-out;
         }
-
 
 
         /* Animação das ondas */
